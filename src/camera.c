@@ -1,7 +1,7 @@
-#include<math.h>
+#include <math.h>
 
-#include<camera.h>
-#include<geometry.h>
+#include <camera.h>
+#include <geometry.h>
 
 camera cam;
 
@@ -12,7 +12,7 @@ void camera_init()
 	cam.pos[2] = 40.0;
 
 	cam.lookat[0] = 0.0;
-	cam.lookat[1] = 10.0;
+	cam.lookat[1] = 15.0;
 	cam.lookat[2] = 0.0;
 
 	cam.upvec[0] = 0.0;

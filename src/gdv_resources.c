@@ -1,52 +1,67 @@
-#include<GL/gl.h>
-#include<GL/glu.h>
-#include<GL/glext.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glext.h>
 
 #include <fakelib.h>
 
-#include<gdv_os.h>
+#include <gdv_os.h>
 
-#include<landscape.h>
-#include<gdv_resources.h>
+#include <gdv_resources.h>
+#include <objecthandler.h>
+#include <landscape.h>
 
 GLuint texture_mark;
+GLuint texture_labels;
+
 GLuint texture_skybox_left;
 GLuint texture_skybox_front;
 GLuint texture_skybox_right;
 GLuint texture_skybox_back;
 GLuint texture_skybox_top;
 GLuint texture_skybox_bottom;
-GLuint texture_labels;
-GLuint texture_field;
-GLuint texture_net;
-GLuint texture_track;
+
+GLuint texture_ground;
+GLuint texture_optScope;
+GLuint texture_reflexScope;
+
+GLuint texture_sign[5];
+GLuint texture_tree[2];
+
+GLuint texture_verys;
+GLuint texture_sack;
+GLuint texture_mat;
+
+GLuint texture_help[3];
+
+GLuint texture_ba;
+
+GLuint texture_block[2];
+
+GLuint texture_text;
+
+GLuint texture_g36sil;
+
+GLuint texture_rainDrop;
+GLuint texture_lightning;
 
 static int gdv_resources_markIsShowing = 0;
 
-static GLuint save_texture_skybox_left;
-static GLuint save_texture_skybox_front;
-static GLuint save_texture_skybox_right;
-static GLuint save_texture_skybox_back;
-static GLuint save_texture_skybox_top;
-static GLuint save_texture_skybox_bottom;
 static GLuint save_texture_labels;
-static GLuint save_texture_field;
-static GLuint save_texture_net;
-static GLuint save_texture_track;
 
+// --- ---
 
-int gdv_resources_loadImages()
+void gdv_resources_loadImages( void )
 {
 	fake_lib_t *pFakeLib = NULL;
 	fake_image_t *pFakeImage = NULL;
 	
 	pFakeLib = fake_new();
 	
-	fake_dar_add_dir(pFakeLib, "../data");
-	fake_dar_add_dir(pFakeLib, "data");
+	fake_dar_add_dir( pFakeLib, (unsigned char*)"../data" );
+	fake_dar_add_dir( pFakeLib, (unsigned char*)"data" );
 
 	pFakeImage = fake_imageFromPNG(pFakeLib, "mark.png");
 	fake_image_toRGBA8888(pFakeLib, pFakeImage);
@@ -57,15 +72,162 @@ int gdv_resources_loadImages()
 	fake_image_toRGBA8888(pFakeLib, pFakeImage);
 	texture_labels = gdv_resources_textureFromFakeImage(pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, 0);
 	fake_image_delete(pFakeLib, &pFakeImage);
+  
+  // --- ---
+  
+  heightMap = fake_imageFromPNG( pFakeLib, "heightmap.png" );
+  fake_image_toRGBA8888( pFakeLib, heightMap );
+  fake_image_delete( pFakeLib, &pFakeImage );
+  
+  /* sky box */
+  pFakeImage = fake_imageFromPNG( pFakeLib, "skybox_back.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_skybox_back = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0 );
+  fake_image_delete( pFakeLib, &pFakeImage );
 
+  pFakeImage = fake_imageFromPNG( pFakeLib, "skybox_bottom.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_skybox_bottom = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+  
+  pFakeImage = fake_imageFromPNG( pFakeLib, "skybox_front.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_skybox_front = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0 );
+  fake_image_delete( pFakeLib, &pFakeImage );
 
-	// TODO: Load and generate your textures here
+  pFakeImage = fake_imageFromPNG( pFakeLib, "skybox_left.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_skybox_left = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+  
+  pFakeImage = fake_imageFromPNG( pFakeLib, "skybox_right.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_skybox_right = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0 );
+  fake_image_delete( pFakeLib, &pFakeImage );
 
+  pFakeImage = fake_imageFromPNG( pFakeLib, "skybox_top.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_skybox_top = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+  
+  // --- ---
+  
+  pFakeImage = fake_imageFromPNG( pFakeLib, "ground.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_ground = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, -1 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+  
+  pFakeImage = fake_imageFromPNG( pFakeLib, "veryStoney.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_verys = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, -1 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+  
+  pFakeImage = fake_imageFromPNG( pFakeLib, "sack.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_sack = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, -1 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+  
+  pFakeImage = fake_imageFromPNG( pFakeLib, "mat.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_mat = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, -1 );
+  fake_image_delete( pFakeLib, &pFakeImage );
 
-	return(0);
+  pFakeImage = fake_imageFromPNG( pFakeLib, "optScope.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_optScope = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, 0 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+
+  pFakeImage = fake_imageFromPNG( pFakeLib, "reflexScope.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_reflexScope = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, 0 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+  
+  pFakeImage = fake_imageFromPNG( pFakeLib, "tree0.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_tree[0] = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, -1 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+  
+  pFakeImage = fake_imageFromPNG( pFakeLib, "tree1.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_tree[1] = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, -1 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+  
+  pFakeImage = fake_imageFromPNG( pFakeLib, "sign100.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_sign[0] = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, -1 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+
+  pFakeImage = fake_imageFromPNG( pFakeLib, "sign150.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_sign[1] = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, -1 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+
+  pFakeImage = fake_imageFromPNG( pFakeLib, "sign200.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_sign[2] = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, -1 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+  
+  pFakeImage = fake_imageFromPNG( pFakeLib, "ba.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_ba = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, 0 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+
+  pFakeImage = fake_imageFromPNG( pFakeLib, "front.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_block[0] = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, 0 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+
+  pFakeImage = fake_imageFromPNG( pFakeLib, "back.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_block[1] = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, 0 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+  
+  pFakeImage = fake_imageFromPNG( pFakeLib, "text.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_text = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, 0 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+  
+  pFakeImage = fake_imageFromPNG( pFakeLib, "g36.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_g36sil = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, 0 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+  
+  pFakeImage = fake_imageFromPNG( pFakeLib, "rainDrop.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_rainDrop = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, 0 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+  
+  pFakeImage = fake_imageFromPNG( pFakeLib, "lightning.png" );
+  fake_image_toRGBA8888( pFakeLib, pFakeImage );
+  texture_lightning = gdv_resources_textureFromFakeImage( pFakeLib, pFakeImage, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT, 0 );
+  fake_image_delete( pFakeLib, &pFakeImage );
+  
+
+  // ---
+  
+  glGenTextures( 1, &texture_help[0] );
+  glBindTexture( GL_TEXTURE_2D, texture_help[0] );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+  
+  glGenTextures( 1, &texture_help[1] );
+  glBindTexture( GL_TEXTURE_2D, texture_help[1] );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+
+  glGenTextures( 1, &texture_help[2] );
+  glBindTexture( GL_TEXTURE_2D, texture_help[2] );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 }
 
-GLuint gdv_resources_textureFromFakeImage(fake_lib_t *pfl, fake_image_t *fi, GLint minFilter, GLint magFilter, GLint wrapS, GLint wrapT, GLint level)
+int gdv_resources_textureFromFakeImage(fake_lib_t *pfl, fake_image_t *fi, GLint minFilter, GLint magFilter, GLint wrapS, GLint wrapT, GLint level)
 {
 	GLuint texid = 0;
 
@@ -110,42 +272,15 @@ void gdv_resources_toggleMarkTexture()
 {
 	if(gdv_resources_markIsShowing == 0)
 	{
-		save_texture_skybox_left = texture_skybox_left;
-		save_texture_skybox_front = texture_skybox_front;
-		save_texture_skybox_right = texture_skybox_right;
-		save_texture_skybox_back = texture_skybox_back;
-		save_texture_skybox_top = texture_skybox_top;
-		save_texture_skybox_bottom = texture_skybox_bottom;
 		save_texture_labels = texture_labels;
-		save_texture_field = texture_field;
-		save_texture_net = texture_net;
-		save_texture_track = texture_track;
 
-		texture_skybox_left = texture_mark;
-		texture_skybox_front = texture_mark;
-		texture_skybox_right = texture_mark;
-		texture_skybox_back = texture_mark;
-		texture_skybox_top = texture_mark;
-		texture_skybox_bottom = texture_mark;
 		texture_labels = texture_mark;
-		texture_field = texture_mark;
-		texture_net = texture_mark;
-		texture_track = texture_mark;
 
 		gdv_resources_markIsShowing = 1;
 	}
 	else
 	{
-		texture_skybox_left = save_texture_skybox_left;
-		texture_skybox_front = save_texture_skybox_front;
-		texture_skybox_right = save_texture_skybox_right;
-		texture_skybox_back = save_texture_skybox_back;
-		texture_skybox_top = save_texture_skybox_top;
-		texture_skybox_bottom = save_texture_skybox_bottom;
 		texture_labels = save_texture_labels;
-		texture_field = save_texture_field;
-		texture_net = save_texture_net;
-		texture_track = save_texture_track;
 
 		gdv_resources_markIsShowing = 0;
 	}

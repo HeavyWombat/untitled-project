@@ -5,11 +5,11 @@
 #include<string.h>
 #include<windows.h>
 #include<process.h>
-#include <direct.h>
+#include<direct.h>
 
 #include<gdv_os.h>
 
-static int isFullscreen = 0;
+int isFullscreen = 0;
 static int windowWasInitialised = 0;
 
 static HINSTANCE gdv_os_programmInstance = NULL;
@@ -30,6 +30,11 @@ static int gdv_os_windowHeight = 0;
 
 static float gdv_os_width = 0;
 static float gdv_os_height = 0;
+
+static GLuint outlinedFontDisplayListBase = 0;
+static GLuint bitmappedFontDisplayListBase = 0;
+static GLYPHMETRICSFLOAT fontMetrics[256];
+static int isFontInitialised = 0;
 
 LONG WINAPI gdv_os_messageDispatchProcedure(HWND, UINT, WPARAM, LPARAM);
 int gdv_os_openWindow_intern(char* title, int width, int height, int fullscreen);
@@ -80,7 +85,7 @@ int gdv_os_openWindow(char* title, int width, int height)
 	isFullscreen = 0;
 	windowWasInitialised = 1;
 	
-	gdv_os_windowTitle = malloc(strlen(title) + 1);
+	gdv_os_windowTitle = (char*)malloc(strlen(title) + 1);
 	strcpy(gdv_os_windowTitle, title);
 	gdv_os_windowWidth = width;
 	gdv_os_windowHeight = height;
@@ -229,6 +234,66 @@ int gdv_os_openWindow_intern(char* title, int width, int height, int fullscreen)
 		return(GDV_ERROR);
 	}
 
+	if(isFontInitialised == 0)
+	{
+		isFontInitialised = 1;
+
+		HFONT font;
+
+		outlinedFontDisplayListBase = glGenLists(256);
+		bitmappedFontDisplayListBase = glGenLists(256);
+
+		font = CreateFont(-12, // Font Height
+							0, // Font Width (0 = use default)
+							0, // Angle of Escapement
+							0, // Orientation Angle
+							FW_NORMAL, // Font Weight
+							FALSE, // Italic
+							FALSE, // Underline
+							FALSE, // Strikeout
+							ANSI_CHARSET, // Character Set Identifier
+							OUT_TT_PRECIS, // Output Precision
+							CLIP_DEFAULT_PRECIS, // Clipping Precision
+							ANTIALIASED_QUALITY, // Output Quality
+							FF_DONTCARE | DEFAULT_PITCH, // Family And Pitch
+							"Comic Sans MS"); // Font Name
+
+		SelectObject(gdv_os_deviceContext, font);
+
+		wglUseFontOutlines(gdv_os_deviceContext,
+							0, // Starting Character
+							255, // Number of Display Lists to build
+							outlinedFontDisplayListBase,
+							0.01f, // Deviation from the true Outlines
+							0.2f, // Font thickness in the Z Direction
+							WGL_FONT_POLYGONS, // Use Polygons, Not Lines
+							fontMetrics);
+
+// change sh 2006-03-16 begin
+		font = CreateFont(-12, // Font Height
+							0, // Font Width (0 = use default)
+							0, // Angle of Escapement
+							0, // Orientation Angle
+							FW_NORMAL, // Font Weight
+							FALSE, // Italic
+							FALSE, // Underline
+							FALSE, // Strikeout
+							ANSI_CHARSET, // Character Set Identifier
+							OUT_TT_PRECIS, // Output Precision
+							CLIP_DEFAULT_PRECIS, // Clipping Precision
+							ANTIALIASED_QUALITY, // Output Quality
+							FF_DONTCARE | DEFAULT_PITCH, // Family And Pitch
+							"Courier New"); // Font Name
+		
+		SelectObject(gdv_os_deviceContext, font);
+// change sh 2006-03-16 end
+
+		wglUseFontBitmaps(gdv_os_deviceContext,
+							0,
+							255,
+							bitmappedFontDisplayListBase);
+	}
+	
 	return(GDV_OK);
 }
 
@@ -377,7 +442,7 @@ void gdv_os_getWindowSize(float* width, float* height)
 LONG WINAPI gdv_os_messageDispatchProcedure(HWND hWindow, UINT uMessage, WPARAM wParam, LPARAM lParam)
 {
 	LONG lRet = 1;
-	GDV_EventType eventType = -1;
+	GDV_EventType eventType = GDV_EVENT_NOT_DEFINED;
 	int wheelDelta = 0;
 
 	switch(uMessage)
@@ -419,31 +484,31 @@ LONG WINAPI gdv_os_messageDispatchProcedure(HWND hWindow, UINT uMessage, WPARAM 
 			break;
 
 		case WM_LBUTTONDBLCLK:
-			if(eventType == -1) eventType = GDV_EVENT_MOUSE_DOUBLE_CLICK_LEFT_BUTTON;
+			if(eventType == GDV_EVENT_NOT_DEFINED) eventType = GDV_EVENT_MOUSE_DOUBLE_CLICK_LEFT_BUTTON;
 		case WM_LBUTTONDOWN:
-			if(eventType == -1) eventType = GDV_EVENT_MOUSE_DOWN_LEFT_BUTTON;
+			if(eventType == GDV_EVENT_NOT_DEFINED) eventType = GDV_EVENT_MOUSE_DOWN_LEFT_BUTTON;
 		case WM_LBUTTONUP:
-			if(eventType == -1) eventType = GDV_EVENT_MOUSE_UP_LEFT_BUTTON;
+			if(eventType == GDV_EVENT_NOT_DEFINED) eventType = GDV_EVENT_MOUSE_UP_LEFT_BUTTON;
 		case WM_MBUTTONDBLCLK:
-			if(eventType == -1) eventType = GDV_EVENT_MOUSE_DOUBLE_CLICK_MIDDLE_BUTTON;
+			if(eventType == GDV_EVENT_NOT_DEFINED) eventType = GDV_EVENT_MOUSE_DOUBLE_CLICK_MIDDLE_BUTTON;
 		case WM_MBUTTONDOWN:
-			if(eventType == -1) eventType = GDV_EVENT_MOUSE_DOWN_MIDDLE_BUTTON;
+			if(eventType == GDV_EVENT_NOT_DEFINED) eventType = GDV_EVENT_MOUSE_DOWN_MIDDLE_BUTTON;
 		case WM_MBUTTONUP:
-			if(eventType == -1) eventType = GDV_EVENT_MOUSE_UP_MIDDLE_BUTTON;
+			if(eventType == GDV_EVENT_NOT_DEFINED) eventType = GDV_EVENT_MOUSE_UP_MIDDLE_BUTTON;
 		case WM_RBUTTONDBLCLK:
-			if(eventType == -1) eventType = GDV_EVENT_MOUSE_DOUBLE_CLICK_RIGHT_BUTTON;
+			if(eventType == GDV_EVENT_NOT_DEFINED) eventType = GDV_EVENT_MOUSE_DOUBLE_CLICK_RIGHT_BUTTON;
 		case WM_RBUTTONDOWN:
-			if(eventType == -1) eventType = GDV_EVENT_MOUSE_DOWN_RIGHT_BUTTON;
+			if(eventType == GDV_EVENT_NOT_DEFINED) eventType = GDV_EVENT_MOUSE_DOWN_RIGHT_BUTTON;
 		case WM_RBUTTONUP:
-			if(eventType == -1) eventType = GDV_EVENT_MOUSE_UP_RIGHT_BUTTON;
+			if(eventType == GDV_EVENT_NOT_DEFINED) eventType = GDV_EVENT_MOUSE_UP_RIGHT_BUTTON;
 		case WM_MOUSEWHEEL:
-			if(eventType == -1)
+			if(eventType == GDV_EVENT_NOT_DEFINED)
 			{
 				eventType = GDV_EVENT_MOUSE_WHEEL;
 				wheelDelta = HIWORD(wParam);
 			}
 		case WM_MOUSEMOVE:
-			if(eventType == -1) eventType = GDV_EVENT_MOUSE_MOVE;
+			if(eventType == GDV_EVENT_NOT_DEFINED) eventType = GDV_EVENT_MOUSE_MOVE;
 
 			if(gdv_os_mouseEventFunction != NULL)
 			{
@@ -454,13 +519,13 @@ LONG WINAPI gdv_os_messageDispatchProcedure(HWND hWindow, UINT uMessage, WPARAM 
 			break;
 
 		case WM_SYSKEYUP:
-			if(eventType == -1) eventType = GDV_EVENT_KEY_UP;
+			if(eventType == GDV_EVENT_NOT_DEFINED) eventType = GDV_EVENT_KEY_UP;
 		case WM_SYSKEYDOWN:
-			if(eventType == -1) eventType = GDV_EVENT_KEY_DOWN;
+			if(eventType == GDV_EVENT_NOT_DEFINED) eventType = GDV_EVENT_KEY_DOWN;
 		case WM_KEYUP:
-			if(eventType == -1) eventType = GDV_EVENT_KEY_UP;
+			if(eventType == GDV_EVENT_NOT_DEFINED) eventType = GDV_EVENT_KEY_UP;
 		case WM_KEYDOWN:
-			if(eventType == -1) eventType = GDV_EVENT_KEY_DOWN;
+			if(eventType == GDV_EVENT_NOT_DEFINED) eventType = GDV_EVENT_KEY_DOWN;
 			
 			if(gdv_os_keyEventFunction != NULL)
 			{
@@ -761,3 +826,162 @@ int gdv_os_translateKeysToCommenTable(int key)
 	return(transKey);
 }
 
+void gdv_os_drawOutlinedText(const char *text, ...)
+{
+	char expandedText[512];
+	va_list ap;
+	char* strPos = expandedText;
+	float yOffset = 0;
+
+	if(text == NULL) return;
+	
+	va_start(ap, text);
+	vsprintf(expandedText, text, ap);
+	va_end(ap);
+
+	glPushMatrix();
+	glPushAttrib(GL_LIST_BIT | GL_ENABLE_BIT | GL_POLYGON_BIT);
+	glListBase(outlinedFontDisplayListBase);
+
+	while(*strPos != '\0')
+	{
+		glPushMatrix();
+		glTranslatef(0, yOffset, 0);
+		
+		if(strchr(strPos, '\n') != NULL)
+		{
+			glCallLists(strchr(strPos, '\n') - strPos, GL_UNSIGNED_BYTE, strPos);
+			strPos = strchr(strPos, '\n') + 1;
+			yOffset -= 0.75;
+		}
+		else
+		{
+			glCallLists(strlen(strPos), GL_UNSIGNED_BYTE, strPos);
+			strPos += strlen(strPos);
+		}
+		
+		glPopMatrix();
+	}
+
+	glPopAttrib();
+	glPopMatrix();
+}
+
+// change sh 2006-03-16 begin
+void gdv_os_drawBitmappedText(const char *text, ...)
+{
+	float rasterPos1[4];
+	float rasterPos2[4];
+	glGetFloatv(GL_CURRENT_RASTER_POSITION, rasterPos1);
+	
+	char expandedText[512];
+	va_list ap;
+	char* strPos = expandedText;
+
+	if(text == NULL) return;
+	
+	va_start(ap, text);
+	vsprintf(expandedText, text, ap);
+	va_end(ap);
+
+	glPushAttrib(GL_LIST_BIT | GL_ENABLE_BIT | GL_CURRENT_BIT);
+	glListBase(bitmappedFontDisplayListBase);
+
+	while(*strPos != '\0')
+	{
+		if(strchr(strPos, '\n') != NULL)
+		{
+			glCallLists(strchr(strPos, '\n') - strPos, GL_UNSIGNED_BYTE, strPos);
+			strPos = strchr(strPos, '\n') + 1;
+			
+			glGetFloatv(GL_CURRENT_RASTER_POSITION, rasterPos2);
+			glBitmap(0, 0, 0, 0, rasterPos1[0] - rasterPos2[0], -14, NULL);
+		}
+		else
+		{
+			glCallLists(strlen(strPos), GL_UNSIGNED_BYTE, strPos);
+			strPos += strlen(strPos);
+		}
+	}
+
+	glPopAttrib();
+}
+// change sh 2006-03-16 end
+
+int gdv_os_createScreenshot()
+{
+	static char srccount1 = '0';
+	static char srccount2 = '0';
+	static char srccount3 = '0';
+	
+	int imageWidth = (int)gdv_os_width;
+	int imageHeight = (int)gdv_os_height;
+	
+	char fileName[19];
+	fileName[0] = 'S';
+	fileName[1] = 'c';
+	fileName[2] = 'r';
+	fileName[3] = 'e';
+	fileName[4] = 'e';
+	fileName[5] = 'n';
+	fileName[6] = 's';
+	fileName[7] = 'h';
+	fileName[8] = 'o';
+	fileName[9] = 't';
+	fileName[10] = '_';
+	fileName[11] = srccount3;
+	fileName[12] = srccount2;
+	fileName[13] = srccount1;
+	fileName[14] = '.';
+	fileName[15] = 't';
+	fileName[16] = 'g';
+	fileName[17] = 'a';
+	fileName[18] = '\0';
+
+	srccount1++;
+	if(srccount1 > '9')
+	{
+		srccount1 = '0';
+
+		srccount2++;
+		if(srccount2 > '9')
+		{
+			srccount2 = '0';
+			srccount3++;
+		}
+
+	}
+
+	char tgaHeader[18];
+	char* imageBuffer = (char*)malloc(imageWidth * imageHeight * 3);
+	int i;
+
+	FILE* outputFile = fopen(fileName, "wb");
+
+
+	memset(tgaHeader, 0, 18);
+    tgaHeader[2] = 2;
+    tgaHeader[12] = imageWidth & 255;
+    tgaHeader[13] = imageWidth >> 8;
+    tgaHeader[14] = imageHeight & 255;
+    tgaHeader[15] = imageHeight >> 8;
+    tgaHeader[16] = 24;
+
+	glReadPixels(0, 0, imageWidth, imageHeight, GL_RGB, GL_UNSIGNED_BYTE, imageBuffer);
+
+	for(i = 0; i < imageWidth * imageHeight * 3; i+=3)
+	{
+		unsigned char temp = imageBuffer[i];
+		imageBuffer[i] = imageBuffer[i+2];
+		imageBuffer[i+2] = temp;
+	}
+
+	fwrite(tgaHeader, sizeof(unsigned char), 18, outputFile);
+	fwrite(imageBuffer, sizeof(unsigned char), imageWidth * imageHeight * 3, outputFile);
+
+	fclose(outputFile);
+
+	free(imageBuffer);
+
+	return(0);
+}

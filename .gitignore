@@ -1,1 +1,25 @@
+# Compiled executables
 *.exe
+
+# Build artifacts
+*.o
+*.obj
+DUMMY.RAW
+
+# macOS metadata
+.DS_Store
+
+# Libraries (static & dynamic)
+*.a
+*.lib
+*.dll
+*.dylib
+*.so
+*.so.*
+lib/
+
+# Build directories
+build/**/*.o
+build/**/*.obj
+build/**/project
+build/**/project.exe

@@ -1,65 +1,142 @@
-#include<GL/gl.h>
-#include<GL/glu.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
 
-#include<display.h>
-#include<camera.h>
-#include<skybox.h>
-#include<stadium.h>
-#include<gdv_resources.h>
-#include<light.h>
-#include<landscape.h>
+#include <gdv_os.h>
+#include <display.h>
+#include <camera.h>
+#include <gdv_resources.h>
+#include <light.h>
+#include <additionalMath.h>
+#include <cameraMovement.h>
+#include <landscape.h>
+#include <skybox.h>
+#include <trees.h>
+#include <objects.h>
+#include <rifle.h>
+#include <rain.h>
+#include <environment.h>
+#include <targets.h>
+
+#define FPS_BUFFER_SIZE 10000
+
+// --- ---
 
 int display_width;
 int display_height;
 
-int display_showEmpty = 1;
+int display_showEmpty = 0;
+int display_showFPS = 0;
+
+float fpsBuffer[FPS_BUFFER_SIZE] = {0};
+int fpsBufferCursor = 0;
+
+float aspectRatio = (float)display_width/(float)display_height;
+float minDist = 0.1f;
+float maxDist = 32000.0f;
+
+// --- ---
+
+// --- ---
 
 void display_init()
 {
+  glClearAccum( 0.0, 0.0, 0.0, 1.0 );
+  glClear( GL_ACCUM_BUFFER_BIT );
 }
 
-void display_setSize(int w, int h)
+void display_setSize( int w, int h )
 {
 	display_width = w;
 	display_height = h;
+  aspectRatio = (float)display_width / (float)display_height;
 }
 
-void display_drawScene(double timeDiff)
+void display_drawScene( double timeDiff )
 {
-	glClearColor(0.0f, 0.0f, 0.2f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  static int i = 1;
+  static float deltas[3] = { -1.0f, 0.0f, 1.0f };
+  
+  if( bluring == 1 )
+  {
+    i = ( i++ ) % 3;
+  }
+  else
+  {
+    i = 1;
+  }
+  
+	glClearColor( 0.0f, 0.0f, 0.2f, 1.0f );
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-	glViewport(0, 0, display_width, display_height);
+	glViewport( 0, 0, display_width, display_height );
 
 	glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		gluPerspective(60, (float)display_width/(float)display_height, 1.0, 32000.0);
+  glLoadIdentity();
+  
+  switch( cameraMode )
+  {
+    case CAMERA_MODE_WALK:
+    case CAMERA_MODE_FREE:
+      gluPerspective( defaultFOV, aspectRatio, minDist, maxDist );
+      break;
+    
+    case CAMERA_MODE_OPT:
+      gluPerspective( optScopeAngle + deltas[i], aspectRatio, minDist, maxDist );
+      break;
+    
+    case CAMERA_MODE_REFLEX:
+      gluPerspective( reflexScopeAngle, aspectRatio, minDist, maxDist );
+      break;
+    
+    default:
+      gluPerspective( defaultFOV, aspectRatio, minDist, maxDist );
+      break;
+  }
 	
-	glMatrixMode(GL_MODELVIEW);
+	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity();
 
-	gluLookAt(cam.pos[0], cam.pos[1], cam.pos[2],
-		      cam.lookat[0], cam.lookat[1], cam.lookat[2],
-			  cam.upvec[0], cam.upvec[1], cam.upvec[2]);
+	gluLookAt( cam.pos[0], cam.pos[1], cam.pos[2], cam.lookat[0], cam.lookat[1], cam.lookat[2], cam.upvec[0], cam.upvec[1], cam.upvec[2] );
 
-	skybox_draw(12000.0);
+  // --- ---
 
-	light_setup();
-	landscape_draw();
-	stadium_draw(timeDiff);
-	
-	display_drawEmpty();
+  light_setup();
+  
+  skybox_draw();
+  
+  environment_draw( timeDiff );
+
+  landscape_draw();
+  
+  targets_draw( timeDiff );
+  
+  objects_draw();
+  
+  trees_draw();
+  
+  rain_draw( timeDiff );
+  
+  cameraMovement_draw( timeDiff );
+
+  display_drawEmpty();
+
+  rifle_draw( timeDiff );
+  
+  display_drawFPS( timeDiff );
+
+  // --- ---
+  
+  glFlush();
 }
 
 void display_drawEmpty()
 {
 	if(display_showEmpty == 1)
 	{
-		GDV_GLStates currentStates;
-		display_saveCurrentGDVGLStates(&currentStates);
+		glPushAttrib(GL_ENABLE_BIT);
 		
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_TEXTURE_2D);
@@ -105,7 +182,24 @@ void display_drawEmpty()
 			glTexCoord2d(0.5, 0.37); glVertex3f(0.0, 1.5, 0.0 + 17.0);
 		glEnd();
 		
-		display_restoreGDVGLStates(&currentStates);
+		glEnable(GL_CULL_FACE);
+		glDisable(GL_BLEND);
+		glDisable(GL_LIGHTING);
+		glDisable(GL_TEXTURE_2D);
+
+		glPushMatrix();
+		glLoadIdentity();
+		glColor3f(1,1,1);
+		glBegin(GL_LINES);
+			glVertex3f(-0.02, 0, -1.001);
+			glVertex3f(0.02, 0, -1.001);
+
+			glVertex3f(0, -0.02, -1.001);
+			glVertex3f(0, 0.02, -1.001);
+		glEnd();
+		glPopMatrix();
+
+		glPopAttrib();
 	}
 }
 
@@ -128,59 +222,82 @@ void display_setShowEmpty(int state)
 	}
 }
 
-void display_saveCurrentGDVGLStates(GDV_GLStates *states)
+// change sh 2006-03-16 begin
+void display_drawFPS( double timeDiff )
 {
-	states->is_GL_CULL_FACE = glIsEnabled(GL_CULL_FACE);
-	states->is_GL_DEPTH_TEST = glIsEnabled(GL_DEPTH_TEST);
-	states->is_GL_TEXTURE_2D = glIsEnabled(GL_TEXTURE_2D);
-	states->is_GL_LIGHTING = glIsEnabled(GL_LIGHTING);
-	states->is_GL_BLEND = glIsEnabled(GL_BLEND);
+  if( display_showFPS == 1 )
+  {
+    int i;
+    float minFPS = 10000.0, maxFPS = 0.0, averageFPS = 0.0;
+    fpsBuffer[fpsBufferCursor] = 1.0/timeDiff;
+    fpsBufferCursor++;
+  
+    if( fpsBufferCursor >= FPS_BUFFER_SIZE )
+    {
+      fpsBufferCursor = 0;
+    }
+  
+    for( i = 0; i < FPS_BUFFER_SIZE; i++ )
+    {
+      if(fpsBuffer[i] < minFPS)
+        minFPS = fpsBuffer[i];
+      
+      if(fpsBuffer[i] > maxFPS)
+        maxFPS = fpsBuffer[i];
+        
+      averageFPS += fpsBuffer[i];
+    }
+  
+    averageFPS /= FPS_BUFFER_SIZE;
+  
+    glPushAttrib( GL_ENABLE_BIT );
+    glDisable( GL_TEXTURE_2D );
+    glDisable( GL_LIGHTING );
+    glDisable( GL_BLEND );
+    
+    glMatrixMode( GL_PROJECTION );
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D( -0.5f, 0.5f, -0.5f, 0.5f );  // Eine 2D Projektionsmatrix erstellen
+    
+    glMatrixMode( GL_MODELVIEW );
+    glPushMatrix();
+    glLoadIdentity();
+
+    glRasterPos2f(0, 0);
+    glBitmap( 0, 0, 0, 0, (float)display_width / 2.0 - 140.0, (float)display_height / 2.0 - 14.0, NULL );
+
+    gdv_os_drawBitmappedText("FPS: current %.1f\n" \
+                 "     average %.1f\n" \
+                 "     min     %.1f\n" \
+                 "     max     %.1f", 1.0/timeDiff, averageFPS, minFPS, maxFPS);
+                 
+    glMatrixMode( GL_PROJECTION );
+    glPopMatrix();
+
+    glMatrixMode( GL_MODELVIEW );
+    glPopMatrix();
+    
+    glPopAttrib();
+  }
 }
+// change sh 2006-03-16 end
 
-void display_restoreGDVGLStates(GDV_GLStates *states)
+void display_setShowFPS(int state)
 {
-	if(states->is_GL_CULL_FACE == GL_TRUE)
+	if(state == 0)
 	{
-		glEnable(GL_CULL_FACE);
+		display_showFPS = 0;
+	}
+	else if(state == 1)
+	{
+		display_showFPS = 1;
 	}
 	else
 	{
-		glDisable(GL_CULL_FACE);
-	}
-
-	if(states->is_GL_DEPTH_TEST == GL_TRUE)
-	{
-		glEnable(GL_DEPTH_TEST);
-	}
-	else
-	{
-		glDisable(GL_DEPTH_TEST);
-	}
-
-	if(states->is_GL_TEXTURE_2D == GL_TRUE)
-	{
-		glEnable(GL_TEXTURE_2D);
-	}
-	else
-	{
-		glDisable(GL_TEXTURE_2D);
-	}
-
-	if(states->is_GL_LIGHTING == GL_TRUE)
-	{
-		glEnable(GL_LIGHTING);
-	}
-	else
-	{
-		glDisable(GL_LIGHTING);
-	}
-
-	if(states->is_GL_BLEND == GL_TRUE)
-	{
-		glEnable(GL_BLEND);
-	}
-	else
-	{
-		glDisable(GL_BLEND);
+		if(display_showFPS == 0)
+			display_showFPS = 1;
+		else
+			display_showFPS = 0;
 	}
 }
