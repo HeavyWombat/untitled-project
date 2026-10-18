@@ -11,7 +11,7 @@
 typedef struct
 {
   int mark;
-  
+
   float n0[3];
   float p0[3];
 
@@ -20,9 +20,9 @@ typedef struct
 
   float n2[3];
   float p2[3];
-  
+
   float n[3];
-  
+
 } faceWithNormal;
 
 extern fake_image_t* heightMap;
@@ -30,6 +30,6 @@ extern fake_image_t* heightMap;
 void landscape_init();
 void landscape_draw();
 float getHeightAtPos( float x, float z );
-			   
+			
 #endif
 

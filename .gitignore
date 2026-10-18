@@ -23,3 +23,7 @@ build/**/*.o
 build/**/*.obj
 build/**/project
 build/**/project.exe
+
+# IDE related
+.kilo
+

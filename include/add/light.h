@@ -4,5 +4,5 @@
 void light_init( void );
 void light_setup( void );
 void light_thunder( int status );
-			   
+			
 #endif

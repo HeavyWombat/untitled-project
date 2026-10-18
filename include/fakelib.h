@@ -6,7 +6,11 @@ extern "C" {
 #endif
 
 #ifndef GP32
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#else
 #include <GL/gl.h>
+#endif
 #endif
 
 typedef void* fake_lib_t;
@@ -24,9 +28,9 @@ typedef struct {
 
 typedef struct{
 	unsigned short		data[ 3*256 ];	/* always 16bit RGB tripples */
-#ifdef GP32        
+#ifdef GP32
         unsigned short          gp32data[ 256 ];
-#endif        
+#endif
 	unsigned short		num;		/* number of entries */
 } fake_image_pal_t;
 

@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
+#include <gl_compat.h>
 
 #include <skybox.h>
 #include <gdv_resources.h>
@@ -14,21 +13,21 @@ void skybox_init( void )
 {
   float halfSideLength = 512.0f;
   float halfSideHeight = 0.5f * halfSideLength;
-  
+
   skyBoxList = glGenLists( 1 );
   glNewList( skyBoxList, GL_COMPILE );
-  
+
   glPushAttrib( GL_ENABLE_BIT );
 
   glDisable( GL_DEPTH_TEST );
   glDisable( GL_LIGHTING );
-  
+
   glEnable( GL_TEXTURE_2D );
-  
+
   glPushMatrix();
 
   // glTranslatef( 0.0f, 0.5f * halfSideHeight, 0.0f );
-  
+
   glBindTexture( GL_TEXTURE_2D, texture_skybox_top );
   glBegin( GL_QUADS );
   glTexCoord2f( 0.0f, 0.0f );
@@ -104,7 +103,7 @@ void skybox_init( void )
   glPopMatrix();
 
   glPopAttrib();
-  
+
   glEndList();
 }
 

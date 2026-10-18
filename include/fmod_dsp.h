@@ -15,7 +15,7 @@
 
 typedef struct FMOD_DSP_STATE FMOD_DSP_STATE;
 
-/* 
+/*
     DSP callbacks
 */
 typedef FMOD_RESULT (F_CALLBACK *FMOD_DSP_CREATECALLBACK)     (FMOD_DSP_STATE *dsp_state);
@@ -30,7 +30,7 @@ typedef FMOD_RESULT (F_CALLBACK *FMOD_DSP_DIALOGCALLBACK)     (FMOD_DSP_STATE *d
 /*
 [ENUM]
 [
-    [DESCRIPTION]   
+    [DESCRIPTION]
     These definitions can be used for creating FMOD defined special effects or DSP units.
 
     [REMARKS]
@@ -68,7 +68,7 @@ typedef enum
 
 
 /*
-[STRUCTURE] 
+[STRUCTURE]
 [
     [DESCRIPTION]
     Structure to define a parameter for a DSP unit.
@@ -76,7 +76,7 @@ typedef enum
     [REMARKS]
     Members marked with [in] mean the variable can be written to.  The user can set the value.
     Members marked with [out] mean the variable is modified by FMOD and is for reading purposes only.  Do not change this value.
-    
+
     The step parameter tells the gui or application that the parameter has a certain granularity.
     For example in the example of cutoff frequency with a range from 100.0 to 22050.0 you might only want the selection to be in 10hz increments.  For this you would simply use 10.0 as the step value.
     For a boolean, you can use min = 0.0, max = 1.0, step = 1.0.  This way the only possible values are 0.0 and 1.0.
@@ -87,7 +87,7 @@ typedef enum
     [PLATFORMS]
     Win32, Win64, Linux, Linux64, Macintosh, Xbox, Xbox360, PlayStation 2, GameCube, PlayStation Portable, PlayStation 3
 
-    [SEE_ALSO]    
+    [SEE_ALSO]
     System::createDSP
     DSP::setParameter
 ]
@@ -104,7 +104,7 @@ typedef struct FMOD_DSP_PARAMETERDESC
 
 
 /*
-[STRUCTURE] 
+[STRUCTURE]
 [
     [DESCRIPTION]
     When creating a DSP unit, declare one of these and provide the relevant callbacks and name for FMOD to use when it creates and uses a DSP unit of this type.
@@ -112,7 +112,7 @@ typedef struct FMOD_DSP_PARAMETERDESC
     [REMARKS]
     Members marked with [in] mean the variable can be written to.  The user can set the value.
     Members marked with [out] mean the variable is modified by FMOD and is for reading purposes only.  Do not change this value.
-    
+
     There are 2 different ways to change a parameter in this architecture.
     One is to use DSP::setParameter / DSP::getParameter.  This is platform independant and is dynamic, so new unknown plugins can have their parameters enumerated and used.
     The other is to use DSP::showConfigDialog.  This is platform specific and requires a GUI, and will display a dialog box to configure the plugin.
@@ -120,7 +120,7 @@ typedef struct FMOD_DSP_PARAMETERDESC
     [PLATFORMS]
     Win32, Win64, Linux, Linux64, Macintosh, Xbox, Xbox360, PlayStation 2, GameCube, PlayStation Portable, PlayStation 3
 
-    [SEE_ALSO]    
+    [SEE_ALSO]
     System::createDSP
     FMOD_DSP_STATE
 ]
@@ -148,7 +148,7 @@ typedef struct FMOD_DSP_DESCRIPTION
 
 
 /*
-[STRUCTURE] 
+[STRUCTURE]
 [
     [DESCRIPTION]
     DSP plugin structure that is passed into each callback.
@@ -174,7 +174,7 @@ struct FMOD_DSP_STATE
 /*
     ===================================================================================================
 
-    FMOD built in effect parameters.  
+    FMOD built in effect parameters.
     Use DSP::setParameter with these enums for the 'index' parameter.
 
     ===================================================================================================
@@ -182,8 +182,8 @@ struct FMOD_DSP_STATE
 
 /*
 [ENUM]
-[  
-    [DESCRIPTION]   
+[
+    [DESCRIPTION]
     Parameter types for the FMOD_DSP_TYPE_OSCILLATOR filter.
 
     [REMARKS]
@@ -191,7 +191,7 @@ struct FMOD_DSP_STATE
     [PLATFORMS]
     Win32, Win64, Linux, Linux64, Macintosh, Xbox, Xbox360, PlayStation 2, GameCube, PlayStation Portable, PlayStation 3
 
-    [SEE_ALSO]      
+    [SEE_ALSO]
     DSP::setParameter
     DSP::getParameter
     FMOD_DSP_TYPE
@@ -206,8 +206,8 @@ typedef enum
 
 /*
 [ENUM]
-[  
-    [DESCRIPTION]   
+[
+    [DESCRIPTION]
     Parameter types for the FMOD_DSP_TYPE_LOWPASS filter.
 
     [REMARKS]
@@ -215,7 +215,7 @@ typedef enum
     [PLATFORMS]
     Win32, Win64, Linux, Linux64, Macintosh, Xbox, Xbox360, PlayStation 2, GameCube, PlayStation Portable, PlayStation 3
 
-    [SEE_ALSO]      
+    [SEE_ALSO]
     DSP::setParameter
     DSP::getParameter
     FMOD_DSP_TYPE
@@ -230,11 +230,11 @@ typedef enum
 
 /*
 [ENUM]
-[  
-    [DESCRIPTION]   
+[
+    [DESCRIPTION]
     Parameter types for the FMOD_DSP_TYPE_ITLOWPASS filter.
-    This is different to the default FMOD_DSP_TYPE_ITLOWPASS filter in that it uses a different quality algorithm and is 
-    the filter used to produce the correct sounding playback in .IT files. 
+    This is different to the default FMOD_DSP_TYPE_ITLOWPASS filter in that it uses a different quality algorithm and is
+    the filter used to produce the correct sounding playback in .IT files.
     FMOD Ex's .IT playback uses this filter.
 
     [REMARKS]
@@ -242,7 +242,7 @@ typedef enum
     [PLATFORMS]
     Win32, Win64, Linux, Linux64, Macintosh, Xbox, Xbox360, PlayStation 2, GameCube, PlayStation Portable, PlayStation 3
 
-    [SEE_ALSO]      
+    [SEE_ALSO]
     DSP::setParameter
     DSP::getParameter
     FMOD_DSP_TYPE
@@ -257,8 +257,8 @@ typedef enum
 
 /*
 [ENUM]
-[  
-    [DESCRIPTION]   
+[
+    [DESCRIPTION]
     Parameter types for the FMOD_DSP_TYPE_HIGHPASS filter.
 
     [REMARKS]
@@ -266,7 +266,7 @@ typedef enum
     [PLATFORMS]
     Win32, Win64, Linux, Linux64, Macintosh, Xbox, Xbox360, PlayStation 2, GameCube, PlayStation Portable, PlayStation 3
 
-    [SEE_ALSO]      
+    [SEE_ALSO]
     DSP::setParameter
     DSP::getParameter
     FMOD_DSP_TYPE
@@ -281,14 +281,14 @@ typedef enum
 
 /*
 [ENUM]
-[  
-    [DESCRIPTION]   
+[
+    [DESCRIPTION]
     Parameter types for the FMOD_DSP_TYPE_ECHO filter.
 
     [REMARKS]
     Note.  Every time the delay is changed, the plugin re-allocates the echo buffer.  This means the echo will dissapear at that time while it refills its new buffer.
     Larger echo delays result in larger amounts of memory allocated.
-    
+
     '<i>maxchannels</i>' also dictates the amount of memory allocated.  By default, the maxchannels value is 0.  If FMOD is set to stereo, the echo unit will allocate enough memory for 2 channels.  If it is 5.1, it will allocate enough memory for a 6 channel echo, etc.
     If the echo effect is only ever applied to the global mix (ie it was added with System::addDSP), then 0 is the value to set as it will be enough to handle all speaker modes.
     When the echo is added to a channel (ie Channel::addDSP) then the channel count that comes in could be anything from 1 to 8 possibly.  It is only in this case where you might want to increase the channel count above the output's channel count.
@@ -297,7 +297,7 @@ typedef enum
     [PLATFORMS]
     Win32, Win64, Linux, Linux64, Macintosh, Xbox, Xbox360, PlayStation 2, GameCube, PlayStation Portable, PlayStation 3
 
-    [SEE_ALSO]      
+    [SEE_ALSO]
     DSP::setParameter
     DSP::getParameter
     FMOD_DSP_TYPE
@@ -315,20 +315,20 @@ typedef enum
 
 /*
 [ENUM]
-[  
-    [DESCRIPTION]   
+[
+    [DESCRIPTION]
     Parameter types for the FMOD_DSP_TYPE_FLANGE filter.
 
     [REMARKS]
     Flange is an effect where the signal is played twice at the same time, and one copy slides back and forth creating a whooshing or flanging effect.
     As there are 2 copies of the same signal, by default each signal is given 50% mix, so that the total is not louder than the original unaffected signal.
-    
+
     Flange depth is a percentage of a 10ms shift from the original signal.  Anything above 10ms is not considered flange because to the ear it begins to 'echo' so 10ms is the highest value possible.
 
     [PLATFORMS]
     Win32, Win64, Linux, Linux64, Macintosh, Xbox, Xbox360, PlayStation 2, GameCube, PlayStation Portable, PlayStation 3
 
-    [SEE_ALSO]      
+    [SEE_ALSO]
     DSP::setParameter
     DSP::getParameter
     FMOD_DSP_TYPE
@@ -345,8 +345,8 @@ typedef enum
 
 /*
 [ENUM]
-[  
-    [DESCRIPTION]   
+[
+    [DESCRIPTION]
     Parameter types for the FMOD_DSP_TYPE_DISTORTION filter.
 
     [REMARKS]
@@ -354,7 +354,7 @@ typedef enum
     [PLATFORMS]
     Win32, Win64, Linux, Linux64, Macintosh, Xbox, Xbox360, PlayStation 2, GameCube, PlayStation Portable, PlayStation 3
 
-    [SEE_ALSO]      
+    [SEE_ALSO]
     DSP::setParameter
     DSP::getParameter
     FMOD_DSP_TYPE
@@ -368,22 +368,22 @@ typedef enum
 
 /*
 [ENUM]
-[  
-    [DESCRIPTION]   
+[
+    [DESCRIPTION]
     Parameter types for the FMOD_DSP_TYPE_NORMALIZE filter.
 
     [REMARKS]
     Normalize amplifies the sound based on the maximum peaks within the signal.
     For example if the maximum peaks in the signal were 50% of the bandwidth, it would scale the whole sound by 2.
     The lower threshold value makes the normalizer ignores peaks below a certain point, to avoid over-amplification if a loud signal suddenly came in, and also to avoid amplifying to maximum things like background hiss.
-    
+
     Because FMOD is a realtime audio processor, it doesn't have the luxury of knowing the peak for the whole sound (ie it can't see into the future), so it has to process data as it comes in.
     To avoid very sudden changes in volume level based on small samples of new data, fmod fades towards the desired amplification which makes for smooth gain control.  The fadetime parameter can control this.
 
     [PLATFORMS]
     Win32, Win64, Linux, Linux64, Macintosh, Xbox, Xbox360, PlayStation 2, GameCube, PlayStation Portable, PlayStation 3
 
-    [SEE_ALSO]      
+    [SEE_ALSO]
     DSP::setParameter
     DSP::getParameter
     FMOD_DSP_TYPE
@@ -399,21 +399,21 @@ typedef enum
 
 /*
 [ENUM]
-[  
-    [DESCRIPTION]   
+[
+    [DESCRIPTION]
     Parameter types for the FMOD_DSP_TYPE_PARAMEQ filter.
 
     [REMARKS]
     Parametric EQ is a bandpass filter that attenuates or amplifies a selected frequency and its neighbouring frequencies.
-    
+
     To create a multi-band EQ create multiple FMOD_DSP_TYPE_PARAMEQ units and set each unit to different frequencies, for example 1000hz, 2000hz, 4000hz, 8000hz, 16000hz with a range of 1 octave each.
-    
+
     When a frequency has its gain set to 1.0, the sound will be unaffected and represents the original signal exactly.
 
     [PLATFORMS]
     Win32, Win64, Linux, Linux64, Macintosh, Xbox, Xbox360, PlayStation 2, GameCube, PlayStation Portable, PlayStation 3
 
-    [SEE_ALSO]      
+    [SEE_ALSO]
     DSP::setParameter
     DSP::getParameter
     FMOD_DSP_TYPE
@@ -430,21 +430,21 @@ typedef enum
 
 /*
 [ENUM]
-[  
-    [DESCRIPTION]   
+[
+    [DESCRIPTION]
     Parameter types for the FMOD_DSP_TYPE_PITCHSHIFT filter.
 
     [REMARKS]
     This pitch shifting unit can be used to change the pitch of a sound without speeding it up or slowing it down.
     It can also be used for time stretching or scaling, for example if the pitch was doubled, and the frequency of the sound was halved, the pitch of the sound would sound correct but it would be twice as slow.
-    
+
     <b>Warning!</b> This filter is very computationally expensive!  Similar to a vocoder, it requires several overlapping FFT and IFFT's to produce smooth output, and can require around 440mhz for 1 stereo 48khz signal using the default settings.
     Reducing the signal to mono will half the cpu usage, as will the overlap count.
     Reducing this will lower audio quality, but what settings to use are largely dependant on the sound being played.  A noisy polyphonic signal will need higher overlap and fft size compared to a speaking voice for example.
-    
+
     This pitch shifter is based on the pitch shifter code at http://www.dspdimension.com, written by Stephan M. Bernsee.
     The original code is COPYRIGHT 1999-2003 Stephan M. Bernsee <smb@dspdimension.com>.
-    
+
     '<i>maxchannels</i>' dictates the amount of memory allocated.  By default, the maxchannels value is 0.  If FMOD is set to stereo, the pitch shift unit will allocate enough memory for 2 channels.  If it is 5.1, it will allocate enough memory for a 6 channel pitch shift, etc.
     If the pitch shift effect is only ever applied to the global mix (ie it was added with System::addDSP), then 0 is the value to set as it will be enough to handle all speaker modes.
     When the pitch shift is added to a channel (ie Channel::addDSP) then the channel count that comes in could be anything from 1 to 8 possibly.  It is only in this case where you might want to increase the channel count above the output's channel count.
@@ -453,7 +453,7 @@ typedef enum
     [PLATFORMS]
     Win32, Win64, Linux, Linux64, Macintosh, Xbox, Xbox360, PlayStation 2, GameCube, PlayStation Portable, PlayStation 3
 
-    [SEE_ALSO]      
+    [SEE_ALSO]
     DSP::setParameter
     DSP::getParameter
     FMOD_DSP_TYPE
@@ -471,19 +471,19 @@ typedef enum
 
 /*
 [ENUM]
-[  
-    [DESCRIPTION]   
+[
+    [DESCRIPTION]
     Parameter types for the FMOD_DSP_TYPE_CHORUS filter.
 
     [REMARKS]
     Chrous is an effect where the sound is more 'spacious' due to 1 to 3 versions of the sound being played along side the original signal but with the pitch of each copy modulating on a sine wave.
     This is a highly configurable chorus unit.  It supports 3 taps, small and large delay times and also feedback.
-    This unit also could be used to do a simple echo, or a flange effect. 
+    This unit also could be used to do a simple echo, or a flange effect.
 
     [PLATFORMS]
     Win32, Win64, Linux, Linux64, Macintosh, Xbox, Xbox360, PlayStation 2, GameCube, PlayStation Portable, PlayStation 3
 
-    [SEE_ALSO]      
+    [SEE_ALSO]
     DSP::setParameter
     DSP::getParameter
     FMOD_DSP_TYPE
@@ -505,8 +505,8 @@ typedef enum
 
 /*
 [ENUM]
-[  
-    [DESCRIPTION]   
+[
+    [DESCRIPTION]
     Parameter types for the FMOD_DSP_TYPE_REVERB filter.
 
     [REMARKS]
@@ -515,7 +515,7 @@ typedef enum
     [PLATFORMS]
     Win32, Win64, Linux, Linux64, Macintosh, Xbox, Xbox360, PlayStation 2, GameCube, PlayStation Portable, PlayStation 3
 
-    [SEE_ALSO]      
+    [SEE_ALSO]
     DSP::setParameter
     DSP::getParameter
     FMOD_DSP_TYPE
@@ -534,15 +534,15 @@ typedef enum
 
 /*
 [ENUM]
-[  
-    [DESCRIPTION]   
+[
+    [DESCRIPTION]
     Parameter types for the FMOD_DSP_TYPE_ITECHO filter.
     This is effectively a software based echo filter that emulates the DirectX DMO echo effect.  Impulse tracker files can support this, and FMOD will produce the effect on ANY platform, not just those that support DirectX effects!
 
     [REMARKS]
     Note.  Every time the delay is changed, the plugin re-allocates the echo buffer.  This means the echo will dissapear at that time while it refills its new buffer.
     Larger echo delays result in larger amounts of memory allocated.
-    
+
     As this is a stereo filter made mainly for IT playback, it is targeted for stereo signals.
     With mono signals only the FMOD_DSP_ITECHO_LEFTDELAY is used.
     For multichannel signals (>2) there will be no echo on those channels.
@@ -550,7 +550,7 @@ typedef enum
     [PLATFORMS]
     Win32, Win64, Linux, Linux64, Macintosh, Xbox, Xbox360, PlayStation 2, GameCube, PlayStation Portable, PlayStation 3
 
-    [SEE_ALSO]      
+    [SEE_ALSO]
     DSP::SetParameter
     DSP::GetParameter
     FMOD_DSP_TYPE

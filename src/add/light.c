@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
+#include <gl_compat.h>
 
 #include <math.h>
 
@@ -39,9 +38,9 @@ void light_init( void )
   glEnable( GL_LIGHTING );
 	
   glEnable( GL_LIGHT1 );
-  
+
   glDisable( GL_LIGHT2 );
-  
+
   glDisable( GL_LIGHT0 );
   glEnable( GL_FOG );
 }
@@ -52,12 +51,12 @@ void light_setup( void )
   glLightfv( GL_LIGHT0, GL_AMBIENT, lightAmbient0 );
   glLightfv( GL_LIGHT0, GL_SPECULAR, lightSpecular0 );
   glLightfv( GL_LIGHT0, GL_POSITION, lightPosition0 );
-  
+
   glLightfv( GL_LIGHT1, GL_DIFFUSE, lightDiffuse1 );
   glLightfv( GL_LIGHT1, GL_AMBIENT, lightAmbient1 );
   glLightfv( GL_LIGHT1, GL_SPECULAR, lightSpecular1 );
   glLightfv( GL_LIGHT1, GL_POSITION, lightPosition1 );
-  
+
   glLightfv( GL_LIGHT2, GL_DIFFUSE, lightDiffuse2 );
   glLightfv( GL_LIGHT2, GL_AMBIENT, lightAmbient2 );
   glLightfv( GL_LIGHT2, GL_SPECULAR, lightSpecular2 );

@@ -48,7 +48,7 @@ void TiXmlBase::PutString( const TIXML_STRING& str, TIXML_STRING* outString )
 	{
 		unsigned char c = (unsigned char) str[i];
 
-		if (    c == '&' 
+		if (    c == '&'
 		     && i < ( (int)str.length() - 2 )
 			 && str[i+1] == '#'
 			 && str[i+2] == 'x' )
@@ -170,7 +170,7 @@ TiXmlNode::~TiXmlNode()
 void TiXmlNode::CopyTo( TiXmlNode* target ) const
 {
 	target->SetValue (value.c_str() );
-	target->userData = userData; 
+	target->userData = userData;
 }
 
 
@@ -421,7 +421,7 @@ TiXmlNode* TiXmlNode::IterateChildren( const char * val, TiXmlNode* previous )
 	}
 }
 
-const TiXmlNode* TiXmlNode::NextSibling( const char * _value ) const 
+const TiXmlNode* TiXmlNode::NextSibling( const char * _value ) const
 {
 	const TiXmlNode* node;
 	for ( node = next; node; node = node->next )
@@ -622,7 +622,7 @@ TiXmlElement::TiXmlElement (const char * _value)
 
 
 #ifdef TIXML_USE_STL
-TiXmlElement::TiXmlElement( const std::string& _value ) 
+TiXmlElement::TiXmlElement( const std::string& _value )
 	: TiXmlNode( TiXmlNode::ELEMENT )
 {
 	firstChild = lastChild = 0;
@@ -896,7 +896,7 @@ void TiXmlElement::CopyTo( TiXmlElement* target ) const
 	// superclass:
 	TiXmlNode::CopyTo( target );
 
-	// Element class: 
+	// Element class:
 	// Clone the attributes, then clone the children.
 	const TiXmlAttribute* attribute = 0;
 	for(	attribute = attributeSet.First();
@@ -1031,7 +1031,7 @@ bool TiXmlDocument::LoadFile( const char* filename, TiXmlEncoding encoding )
 
 bool TiXmlDocument::LoadFile( FILE* file, TiXmlEncoding encoding )
 {
-	if ( !file ) 
+	if ( !file )
 	{
 		SetError( TIXML_ERROR_OPENING_FILE, 0, 0, TIXML_ENCODING_UNKNOWN );
 		return false;
@@ -1063,13 +1063,13 @@ bool TiXmlDocument::LoadFile( FILE* file, TiXmlEncoding encoding )
 	// 2.11 End-of-Line Handling
 	// <snip>
 	// <quote>
-	// ...the XML processor MUST behave as if it normalized all line breaks in external 
-	// parsed entities (including the document entity) on input, before parsing, by translating 
-	// both the two-character sequence #xD #xA and any #xD that is not followed by #xA to 
+	// ...the XML processor MUST behave as if it normalized all line breaks in external
+	// parsed entities (including the document entity) on input, before parsing, by translating
+	// both the two-character sequence #xD #xA and any #xD that is not followed by #xA to
 	// a single #xA character.
 	// </quote>
 	//
-	// It is not clear fgets does that, and certainly isn't clear it works cross platform. 
+	// It is not clear fgets does that, and certainly isn't clear it works cross platform.
 	// Generally, you expect fgets to translate from the convention of the OS to the c/unix
 	// convention, and not work generally.
 
@@ -1159,7 +1159,7 @@ bool TiXmlDocument::SaveFile( const char * filename ) const
 
 bool TiXmlDocument::SaveFile( FILE* fp ) const
 {
-	if ( useMicrosoftBOM ) 
+	if ( useMicrosoftBOM )
 	{
 		const unsigned char TIXML_UTF_LEAD_0 = 0xefU;
 		const unsigned char TIXML_UTF_LEAD_1 = 0xbbU;
@@ -1668,7 +1668,7 @@ std::string & operator<< (std::string& out, const TiXmlNode& base )
 {
    std::ostringstream os_stream( std::ostringstream::out );
    base.StreamOut( &os_stream );
-   
+
    out.append( os_stream.str() );
    return out;
 }

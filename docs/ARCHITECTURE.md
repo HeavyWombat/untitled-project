@@ -82,15 +82,15 @@ do {
         GetMessage(&message, NULL, 0, 0);
         DispatchMessage(&message);  // Routes to event handlers
     }
-    
+
     // Execute game logic
     stop = (*gdv_os_mainloopFunction)();  // Calls gdv_mainloop()
-    
+
     // Present frame to screen
     glFlush();
     glFinish();
     SwapBuffers(gdv_os_deviceContext);
-    
+
 } while(stop != 1);
 ```
 
@@ -110,15 +110,15 @@ Each frame executes:
     switch(gameMode) {
         case GAME_MODE_GEAR_UP (0):
             gearup_gearup(timeDiff)      // Loading screen
-            
+
         case GAME_MODE_SPLASH (1):
             splash_draw(timeDiff)        // Intro screens
-            
+
         case GAME_MODE_DRAW (42):
             cameraMovement_moveCamera(timeDiff)
             sound_run(timeDiff)
             display_drawScene(timeDiff)   // Main gameplay
-            
+
         case GAME_MODE_HELP (0xF1):
             cameraMovement_moveCamera(timeDiff)
             help_drawHelp(timeDiff)      // Help overlay
@@ -130,8 +130,8 @@ Each frame executes:
 
 ### Event Handling
 
-**Window Events** - Resize, focus changes  
-**Mouse Events** - Movement triggers camera rotation, clicks trigger shooting  
+**Window Events** - Resize, focus changes
+**Mouse Events** - Movement triggers camera rotation, clicks trigger shooting
 **Keyboard Events** - Maintains state array for continuous input (WASD movement)
 
 ---
@@ -395,7 +395,7 @@ The main loop switches on `gameMode` to route to the appropriate update/render f
 ## 6. Key Systems
 
 ### Sound System
-**Technology:** FMOD Ex audio library  
+**Technology:** FMOD Ex audio library
 **File:** `src/add/sound.c`
 
 **Audio Files:**
@@ -564,14 +564,14 @@ Mouse moves
     → Windows WM_KEYDOWN
     → gdv_keyEventFunction()
     → gdv_key_states['w'] = 1
-    
+
 Each frame while key held:
     → cameraMovement_moveCamera(timeDiff)
     → Check gdv_key_states['w']
     → Accelerate: speeds[0] += acceleration * timeDiff
     → camera_moveForward(timeDiff * speeds[0])
     → Updates cam.pos along lookat direction
-    
+
 'W' key released
     → WM_KEYUP
     → gdv_key_states['w'] = 0
@@ -593,7 +593,7 @@ Left click
                 → Test each target with GL_SELECT mode
                 → If hit: targets[i].visible = TARGET_MOVING_DOWN
             → Apply recoil to camera
-            
+
 Next frames:
     → targets_draw(timeDiff)
         → Animate hit target rotating down (1 second)
@@ -611,19 +611,19 @@ Each frame:
                 TARGET_MOVING_UP:
                     arc += 90.0° * timeDiff
                     if arc >= 0°: visible = TARGET_VISIBLE
-                
+
                 TARGET_VISIBLE:
                     timeOut -= timeDiff
                     if timeOut <= 0: visible = TARGET_MOVING_DOWN
-                
+
                 TARGET_MOVING_DOWN:
                     arc -= 90.0° * timeDiff
                     if arc <= -90°: visible = TARGET_INVISIBLE
-                
+
                 TARGET_INVISIBLE:
                     timeOut -= timeDiff
                     if timeOut <= 0: visible = TARGET_MOVING_UP
-            
+
             Render at current rotation
 ```
 
@@ -637,7 +637,7 @@ Each frame:
             → sound_thunderSound() (delayed)
             → timer = 0
             → nextLightning = random(5-15 seconds)
-    
+
     rain_draw(timeDiff)
         → For each particle:
             → Update y position: y -= fallSpeed * timeDiff

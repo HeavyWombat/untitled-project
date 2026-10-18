@@ -1,6 +1,7 @@
 #ifndef __OBJECTLOADER_H
 #define __OBJECTLOADER_H
 
+#ifdef __cplusplus
 using namespace std;
 
 #include<string>
@@ -79,11 +80,22 @@ class BlenderObject
 		map<string, VertexGroup*, lt_str_comp> vertexGroups;
 };
 
+extern "C" {
+#else
+/* Forward declaration for C code */
+typedef struct BlenderObject BlenderObject;
+#endif
+
 void objecthandler_init();
 int objecthandler_loadFile(char* fileName);
 void objecthandler_drawObject(BlenderObject* object);
 void objecthandler_createOpenGLCommands(BlenderObject* object);
+BlenderObject* objecthandler_getObject(const char* name);
+void objecthandler_setTexture(BlenderObject* obj, int textureID);
 
+#ifdef __cplusplus
 extern map<string, BlenderObject*, lt_str_comp> objecthandler_objects;
+}
+#endif
 
 #endif

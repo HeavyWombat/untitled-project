@@ -14,8 +14,8 @@
 #define PLAYER_POSITION_CROUCH 3
 
 extern const float defaultFOV;
-extern const float optScopeAngle;
-extern const float reflexScopeAngle;
+extern float optScopeAngle;
+extern float reflexScopeAngle;
 extern int cameraMode;
 extern int bluring;
 

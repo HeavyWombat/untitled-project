@@ -1,5 +1,4 @@
-#include <GL/gl.h>
-#include <GL/glu.h>
+#include <gl_compat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <tinyxml.h>
@@ -9,9 +8,11 @@ map<string, BlenderObject*, lt_str_comp> objecthandler_objects;
 
 void objecthandler_init()
 {
-  objecthandler_loadFile("data\\sign.xml");
-  objecthandler_loadFile("data\\ground.xml");
-  objecthandler_loadFile("data\\sack.xml");
+  printf("Loading 3D models...\n");
+  objecthandler_loadFile("data/sign.xml");
+  objecthandler_loadFile("data/ground.xml");
+  objecthandler_loadFile("data/sack.xml");
+  printf("3D models loaded\n");
 }
 
 int objecthandler_loadFile(char* fileName)
@@ -21,6 +22,8 @@ int objecthandler_loadFile(char* fileName)
 	
 	if(!loadOk)
 	{
+		fprintf(stderr, "Warning: Failed to load 3D model: %s\n", fileName);
+		fprintf(stderr, "         Error: %s\n", doc->ErrorDesc());
 		delete doc;
 		return(1);
 	}
@@ -170,5 +173,22 @@ void objecthandler_createOpenGLCommands(BlenderObject* object)
 		}
 		
 		glEnd();
+	}
+}
+
+/* C wrapper functions for accessing the C++ map */
+BlenderObject* objecthandler_getObject(const char* name) {
+	string strName(name);
+	map<string, BlenderObject*, lt_str_comp>::iterator it = objecthandler_objects.find(strName);
+	if (it != objecthandler_objects.end()) {
+		return it->second;
+	}
+	return NULL;
+}
+
+void objecthandler_setTexture(BlenderObject* obj, int textureID) {
+	if (obj) {
+		obj->useTexture = 1;
+		obj->textureID = textureID;
 	}
 }

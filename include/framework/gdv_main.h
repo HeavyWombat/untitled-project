@@ -1,8 +1,7 @@
 #ifndef GDV_MAIN_H_
 #define GDV_MAIN_H_
 
-#include <GL/gl.h>
-#include <GL/glu.h>
+#include <gl_compat.h>
 
 #define GDV_PROJECT_NAME "untitled project"
 

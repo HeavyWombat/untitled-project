@@ -3,8 +3,7 @@
 #include <string.h>
 #include <math.h>
 
-#include <GL/gl.h>
-#include <GL/glu.h>
+#include <gl_compat.h>
 
 #include <gdv_os.h>
 #include <gdv_main.h>
@@ -37,7 +36,7 @@ static double gdv_lasttime = 0.0;
 GLenum polygoneMode = GL_FILL;
 char gdv_key_states[0xFFF];
 int gameMode = GAME_MODE_GEAR_UP;
-int backupGameMode = gameMode;
+int backupGameMode = GAME_MODE_GEAR_UP;
 
 int mouseButtons[3] = { 0, 0, 0 };
 int mousePos[2];
@@ -105,11 +104,25 @@ static int gdv_main_init()
 {
 	int rc = 0;
 	
+	fprintf(stderr, "\n=== Initializing OpenGL ===\n");
+	fflush(stderr);
+	
+	/* Set initial window size */
+	float w, h;
+	gdv_os_getWindowSize(&w, &h);
+	display_setSize((int)w, (int)h);
+	fprintf(stderr, "  Window size: %.0fx%.0f\n", w, h);
+	fflush(stderr);
+	
 	glShadeModel( GL_SMOOTH );
+	fprintf(stderr, "  ✓ Shade model set\n");
+	fflush(stderr);
 	
 	glClearDepth( 1.0f );
 	glEnable( GL_DEPTH_TEST );
 	glDepthFunc( GL_LEQUAL );
+	fprintf(stderr, "  ✓ Depth testing configured\n");
+	fflush(stderr);
 	
 	glDisable( GL_TEXTURE_2D );
 
@@ -117,6 +130,8 @@ static int gdv_main_init()
 	glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
 	glHint( GL_POINT_SMOOTH_HINT, GL_NICEST );
 	glHint( GL_POLYGON_SMOOTH_HINT, GL_NICEST );
+	fprintf(stderr, "  ✓ Rendering hints set\n");
+	fflush(stderr);
 	
 	glEnable( GL_NORMALIZE );
 	glEnable( GL_POLYGON_OFFSET_FILL );
@@ -126,20 +141,47 @@ static int gdv_main_init()
 
 	glDisable( GL_LIGHTING );
 	glDisable( GL_BLEND );
-  
+
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
 	glPolygonMode( GL_FRONT_AND_BACK, polygoneMode );
-  
+	fprintf(stderr, "  ✓ Polygon modes configured\n");
+	fflush(stderr);
+
+  fprintf(stderr, "  Initializing text subsystem...\n");
+  fflush(stderr);
   text_init();
+  fprintf(stderr, "  ✓ Text initialized\n");
+  fflush(stderr);
+
+  fprintf(stderr, "  Initializing display subsystem...\n");
+  fflush(stderr);
   display_init();
+  fprintf(stderr, "  ✓ Display initialized\n");
+  fflush(stderr);
+
+  fprintf(stderr, "  Initializing gear-up subsystem...\n");
+  fflush(stderr);
   gearup_init();
+  fprintf(stderr, "  ✓ Gear-up initialized\n");
+  fflush(stderr);
+
+  fprintf(stderr, "=== Initialization Complete ===\n\n");
+  fflush(stderr);
 
 	return rc;
 }
 
 static int gdv_mainloop( void )
 {
+	static int firstCall = 1;
+	if (firstCall) {
+		fprintf(stderr, "\n=== Main Loop Started ===\n");
+		fprintf(stderr, "Initial game mode: %d (GAME_MODE_GEAR_UP)\n", gameMode);
+		fflush(stderr);
+		firstCall = 0;
+	}
+	
 	double currentTime = gdv_os_getCurrentTime();
 	double timeDiff = currentTime - gdv_lasttime;
 	gdv_lasttime = currentTime;
@@ -151,19 +193,21 @@ static int gdv_mainloop( void )
     case GAME_MODE_DRAW:
       cameraMovement_moveCamera( timeDiff );
       sound_run( timeDiff );
-      
+
+      /* Motion blur using glAccum is disabled on macOS (no accumulation buffer support in Metal) */
+      #if 0
       if( ( bluring == 1 ) && ( cameraMode == CAMERA_MODE_OPT ) )
       {
         const float aThird = 1.0f / 3.0f;
-        
+
         display_drawScene( aThird * timeDiff );
         glAccum( GL_MULT, aThird );
         glAccum( GL_ACCUM, 1.0f - aThird );
-        
+
         display_drawScene( aThird * timeDiff );
         glAccum( GL_MULT, aThird );
         glAccum( GL_ACCUM, 1.0f - aThird );
-        
+
         display_drawScene( aThird * timeDiff );
         glAccum( GL_MULT, aThird );
         glAccum( GL_ACCUM, 1.0f - aThird );
@@ -171,25 +215,26 @@ static int gdv_mainloop( void )
         glAccum( GL_RETURN, 1.0f );
       }
       else
+      #endif
       {
         display_drawScene( timeDiff );
       }
       break;
-    
+
     case GAME_MODE_GEAR_UP:
       gearup_gearup( timeDiff );
       break;
-    
+
     case GAME_MODE_SPLASH:
       splash_draw( timeDiff );
       break;
-      
+
     case GAME_MODE_HELP:
       cameraMovement_moveCamera( timeDiff );
       help_drawHelp( timeDiff );
       break;
   }
-  
+
   // ---
 
 	if(terminateTimeOut > 0)
@@ -215,9 +260,9 @@ static void gdv_mouseEventFunction( GDV_BaseEvent* event )
 {
 	if( mouseCameraMode != 1 )
     return;
-  
+
   // ---
-  
+
   float alpha = ((float)((GDV_Event_Mouse*)event)->xPos - (float)lastMousePos[0]) / 200.0;
 	float beta = ((float)((GDV_Event_Mouse*)event)->yPos - (float)lastMousePos[1]) / 200.0;
 
@@ -226,16 +271,16 @@ static void gdv_mouseEventFunction( GDV_BaseEvent* event )
   cameraMovement_moveCameraYawPitch( alpha, beta );
 
   // ---
-  
+
   mousePos[0] = ((GDV_Event_Mouse*)event)->xPos;
   mousePos[1] = ((GDV_Event_Mouse*)event)->yPos;
-  
+
   if( ( cameraMode == CAMERA_MODE_OPT ) || ( cameraMode == CAMERA_MODE_REFLEX ) )
     if( event->eventType == GDV_EVENT_MOUSE_DOWN_LEFT_BUTTON )
       shoot();
-  
+
   // ---
-  
+
   switch( event->eventType )
   {
     case GDV_EVENT_MOUSE_DOWN_LEFT_BUTTON:
@@ -249,7 +294,7 @@ static void gdv_mouseEventFunction( GDV_BaseEvent* event )
     case GDV_EVENT_MOUSE_DOWN_RIGHT_BUTTON:
       mouseButtons[2] = 1;
       break;
-    
+
     case GDV_EVENT_MOUSE_UP_LEFT_BUTTON:
       mouseButtons[0] = 0;
       break;
@@ -261,7 +306,7 @@ static void gdv_mouseEventFunction( GDV_BaseEvent* event )
     case GDV_EVENT_MOUSE_UP_RIGHT_BUTTON:
       mouseButtons[2] = 0;
       break;
-    
+
     default:
       break;
   }
@@ -273,7 +318,7 @@ static void gdv_keyEventFunction( GDV_BaseEvent* event )
     return;
   	
   // ---
-  
+
 	if(event->eventType == GDV_EVENT_KEY_UP)
 	{
 		gdv_key_states[((GDV_Event_Keyboard*)event)->key] = 0;
@@ -282,7 +327,7 @@ static void gdv_keyEventFunction( GDV_BaseEvent* event )
 		{
 		}
 	}
-  
+
   // ---
 
 	if(event->eventType == GDV_EVENT_KEY_DOWN)
@@ -295,17 +340,17 @@ static void gdv_keyEventFunction( GDV_BaseEvent* event )
         if( cameraMode != CAMERA_MODE_FREE )
           cameraMovement_toggleCameraMode( CAMERA_MODE_REFLEX );
         break;
-        
+
       case (int)'3':
         if( cameraMode != CAMERA_MODE_FREE )
           cameraMovement_toggleCameraMode( CAMERA_MODE_OPT );
         break;
-      
+
       case (int)'1':
         if( cameraMode != CAMERA_MODE_FREE )
           cameraMovement_toggleCameraMode( CAMERA_MODE_WALK );
         break;
-      
+
       case (int)'r':
       case (int)'R':
         rifle_reload();
@@ -337,29 +382,29 @@ static void gdv_keyEventFunction( GDV_BaseEvent* event )
           gameMode = GAME_MODE_HELP;
         }
         break;
-      
+
       case GDV_KEY_F2:
         bluring = ( bluring == 0 )? 1: 0;
         break;
-      
+
       case GDV_KEY_F3:
         cameraMovement_toggleFreeLocked();
         break;
-      
+
       case GDV_KEY_F4:
         if( glIsEnabled( GL_LIGHT0 ) )
           glDisable( GL_LIGHT0 );
         else
-          glEnable( GL_LIGHT0 );      
+          glEnable( GL_LIGHT0 );
         break;
-      
+
       case GDV_KEY_F5:
         if( glIsEnabled( GL_FOG ) )
           glDisable( GL_FOG );
         else
           glEnable( GL_FOG );
         break;
-      
+
 			case GDV_KEY_F6:
 				gdv_os_createScreenshot();
 				break;

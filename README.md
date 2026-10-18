@@ -10,8 +10,8 @@ This project was created as part of a university course on 3D graphics programmi
 - **Purpose:** University 3D graphics course showcase
 - **Language:** C (~6,275 lines + game modules)
 - **Graphics:** OpenGL (GL/GLU)
-- **Audio:** FMOD Ex 4.03.02
-- **Platform:** Windows (MinGW/GCC)
+- **Audio:** FMOD Ex 4.03.02 (Windows) / OpenAL (macOS)
+- **Platform:** Windows (MinGW/GCC), macOS (Clang)
 
 ## Features
 
@@ -25,7 +25,10 @@ This project was created as part of a university course on 3D graphics programmi
 
 ## Prerequisites
 
-⚠️ **Asset files not included:** This repository contains source code only. You must supply your own texture and audio assets. See `docs/ASSETS.md` for a complete list of required files and licensing guidance.
+⚠️ **Asset files not included:** This repository contains source code only. You must supply your own texture and audio assets.
+
+- **Windows**: See `docs/ASSETS.md` for required files and licensing guidance
+- **macOS**: The port includes graceful fallback handling - see `docs/ASSETS_MACOS.md`. The program will run with placeholder textures and silent audio if assets are missing.
 
 ## Building
 
@@ -35,14 +38,33 @@ cd build/win
 make
 ```
 
+### macOS
+First, install dependencies:
+```bash
+brew install libpng
+```
+
+Then build:
+```bash
+cd build/macos
+make
+```
+
 The compiled executable will be placed in the project root directory.
 
 ## Dependencies
 
+### Windows
 - OpenGL 32 / GLU 32
 - FMOD Ex 4.03.02
 - libfake.a (custom image/archive library)
 - zlib
+
+### macOS
+- OpenGL / GLU (system-provided)
+- OpenAL (system-provided)
+- libpng (install via Homebrew: `brew install libpng`)
+- zlib (system-provided)
 
 ## Project Structure
 
@@ -50,6 +72,7 @@ The compiled executable will be placed in the project root directory.
 .
 ├── src/
 │   ├── win/          # Windows-specific OS layer
+│   ├── macos/        # macOS-specific OS layer
 │   ├── add/          # Game modules (19 modules)
 │   ├── tinyxml/      # XML parsing library
 │   └── *.c           # Core framework
@@ -57,7 +80,8 @@ The compiled executable will be placed in the project root directory.
 │   ├── framework/    # Framework headers
 │   └── add/          # Game module headers
 ├── build/
-│   └── win/          # Windows build system
+│   ├── win/          # Windows build system
+│   └── macos/        # macOS build system
 ├── data/             # Game assets (textures, models, audio)
 └── docs/             # Documentation
 
@@ -65,7 +89,9 @@ The compiled executable will be placed in the project root directory.
 
 ## Documentation
 
-- `docs/ASSETS.md` - Required asset files and licensing guidance
+- `docs/ASSETS.md` - Required asset files and licensing guidance (Windows)
+- `docs/ASSETS_MACOS.md` - macOS asset loading with fallback handling
+- `docs/QUICKSTART_MACOS.md` - Quick start guide for macOS
 
 ## Technical Highlights
 
@@ -88,5 +114,5 @@ n/a
 
 ## History
 
-**Original Development:** April 2006  
+**Original Development:** April 2006
 **Context:** University 3D graphics programming course project

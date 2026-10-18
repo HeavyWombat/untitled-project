@@ -14,7 +14,7 @@ typedef struct
 {
   float position[3];
   float arc;
-  
+
   int visible;
   double timeOut;
 } target;

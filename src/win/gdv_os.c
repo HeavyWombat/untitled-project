@@ -358,7 +358,7 @@ void gdv_os_registerWindowEventFunction(void (*windowEventFunction)(GDV_BaseEven
 unsigned __stdcall gdv_os_timeoutFunction(void* pArguments)
 {
 	Sleep(GDV_OS_TIMEOUT);
-    
+
 	printf("ERROR: The mainloop took to long to execute, possible hang situation.\n");
 	fflush(stdout);
 
@@ -386,8 +386,8 @@ int gdv_os_runMainloop()
 		//while(((gdv_os_getCurrentTime() - mainLastTime) < 0.05) && (PeekMessage(&message, NULL, 0, 0, PM_NOREMOVE) == TRUE))
 		while(PeekMessage(&message, NULL, 0, 0, PM_NOREMOVE) == TRUE)
 		{
-			if((rc = GetMessage(&message, NULL, 0, 0)) != 0) 
-			{ 
+			if((rc = GetMessage(&message, NULL, 0, 0)) != 0)
+			{
 				if(rc == -1)
 				{
 					//erc = GetLastError()
@@ -395,12 +395,12 @@ int gdv_os_runMainloop()
 				}
 				else
 				{
-					//TranslateMessage(&message); 
+					//TranslateMessage(&message);
 					DispatchMessage(&message);
 				}
 			}
 			else
-			{ 
+			{
 				// WM_QUIT message was posted
 				
 				stop = 1;
@@ -791,7 +791,7 @@ int gdv_os_setMousePosition(long x, long y, int absoluteRelativeFlag, long* resu
 		}
 
 		WINDOWINFO windwoInfo;
-        
+
 		GetWindowInfo(gdv_os_windowInstance, &windwoInfo);
 		
 		long rcx = ((long)windwoInfo.rcClient.left + (long)x) * (long)65535 / (long)GetDeviceCaps(gdv_os_deviceContext, HORZRES);

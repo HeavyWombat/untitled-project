@@ -150,13 +150,13 @@ int geometry_pointIsInsightTriangle(float point[3], float p1[3], float p2[3], fl
 	geometry_vector_sub_3f(p3, p2, tmp2);
 	geometry_vector_crossProduct_3f(tmp2, planeNormal, tmp3);
 
-	isInside = isInside && geometry_vector_dotProduct_3f(tmp1, tmp3) < 0.0; 
+	isInside = isInside && geometry_vector_dotProduct_3f(tmp1, tmp3) < 0.0;
 
 	geometry_vector_sub_3f(point, p3, tmp1);
 	geometry_vector_sub_3f(p1, p3, tmp2);
 	geometry_vector_crossProduct_3f(tmp2, planeNormal, tmp3);
 
-	isInside = isInside && geometry_vector_dotProduct_3f(tmp1, tmp3) < 0.0; 
+	isInside = isInside && geometry_vector_dotProduct_3f(tmp1, tmp3) < 0.0;
 	
 	return(isInside);
 }

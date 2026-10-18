@@ -50,7 +50,7 @@ LDFLAGS += -L../../lib/win
 LDFLAGS += -lopengl32 -lglu32 -lmingw32 -mwindows -lfake -lz -lfmodex
 
 CC = g++
-RM = rm -f 
+RM = rm -f
 MV = mv
 
 all: $(TITLE)

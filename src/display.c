@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
+#include <gl_compat.h>
 
 #include <gdv_os.h>
 #include <display.h>
@@ -33,7 +32,7 @@ int display_showFPS = 0;
 float fpsBuffer[FPS_BUFFER_SIZE] = {0};
 int fpsBufferCursor = 0;
 
-float aspectRatio = (float)display_width/(float)display_height;
+float aspectRatio = 1.0f;  /* Will be calculated at runtime */
 float minDist = 0.1f;
 float maxDist = 32000.0f;
 
@@ -43,8 +42,11 @@ float maxDist = 32000.0f;
 
 void display_init()
 {
+  /* Accumulation buffer not available on macOS */
+  #if 0
   glClearAccum( 0.0, 0.0, 0.0, 1.0 );
   glClear( GL_ACCUM_BUFFER_BIT );
+  #endif
 }
 
 void display_setSize( int w, int h )
@@ -58,7 +60,7 @@ void display_drawScene( double timeDiff )
 {
   static int i = 1;
   static float deltas[3] = { -1.0f, 0.0f, 1.0f };
-  
+
   if( bluring == 1 )
   {
     i = ( i++ ) % 3;
@@ -67,7 +69,7 @@ void display_drawScene( double timeDiff )
   {
     i = 1;
   }
-  
+
 	glClearColor( 0.0f, 0.0f, 0.2f, 1.0f );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -75,22 +77,22 @@ void display_drawScene( double timeDiff )
 
 	glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  
+
   switch( cameraMode )
   {
     case CAMERA_MODE_WALK:
     case CAMERA_MODE_FREE:
       gluPerspective( defaultFOV, aspectRatio, minDist, maxDist );
       break;
-    
+
     case CAMERA_MODE_OPT:
       gluPerspective( optScopeAngle + deltas[i], aspectRatio, minDist, maxDist );
       break;
-    
+
     case CAMERA_MODE_REFLEX:
       gluPerspective( reflexScopeAngle, aspectRatio, minDist, maxDist );
       break;
-    
+
     default:
       gluPerspective( defaultFOV, aspectRatio, minDist, maxDist );
       break;
@@ -104,31 +106,31 @@ void display_drawScene( double timeDiff )
   // --- ---
 
   light_setup();
-  
+
   skybox_draw();
-  
+
   environment_draw( timeDiff );
 
   landscape_draw();
-  
+
   targets_draw( timeDiff );
-  
+
   objects_draw();
-  
+
   trees_draw();
-  
+
   rain_draw( timeDiff );
-  
+
   cameraMovement_draw( timeDiff );
 
   display_drawEmpty();
 
   rifle_draw( timeDiff );
-  
+
   display_drawFPS( timeDiff );
 
   // --- ---
-  
+
   glFlush();
 }
 
@@ -231,35 +233,35 @@ void display_drawFPS( double timeDiff )
     float minFPS = 10000.0, maxFPS = 0.0, averageFPS = 0.0;
     fpsBuffer[fpsBufferCursor] = 1.0/timeDiff;
     fpsBufferCursor++;
-  
+
     if( fpsBufferCursor >= FPS_BUFFER_SIZE )
     {
       fpsBufferCursor = 0;
     }
-  
+
     for( i = 0; i < FPS_BUFFER_SIZE; i++ )
     {
       if(fpsBuffer[i] < minFPS)
         minFPS = fpsBuffer[i];
-      
+
       if(fpsBuffer[i] > maxFPS)
         maxFPS = fpsBuffer[i];
-        
+
       averageFPS += fpsBuffer[i];
     }
-  
+
     averageFPS /= FPS_BUFFER_SIZE;
-  
+
     glPushAttrib( GL_ENABLE_BIT );
     glDisable( GL_TEXTURE_2D );
     glDisable( GL_LIGHTING );
     glDisable( GL_BLEND );
-    
+
     glMatrixMode( GL_PROJECTION );
     glPushMatrix();
     glLoadIdentity();
     gluOrtho2D( -0.5f, 0.5f, -0.5f, 0.5f );  // Eine 2D Projektionsmatrix erstellen
-    
+
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
     glLoadIdentity();
@@ -271,13 +273,13 @@ void display_drawFPS( double timeDiff )
                  "     average %.1f\n" \
                  "     min     %.1f\n" \
                  "     max     %.1f", 1.0/timeDiff, averageFPS, minFPS, maxFPS);
-                 
+
     glMatrixMode( GL_PROJECTION );
     glPopMatrix();
 
     glMatrixMode( GL_MODELVIEW );
     glPopMatrix();
-    
+
     glPopAttrib();
   }
 }
