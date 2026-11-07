@@ -95,7 +95,7 @@ void gearup_init( void )
   idx++;
 
   init[idx].status = 0;
-  init[idx].text = "Setzen aller B�ume";
+  init[idx].text = "Setzen aller Bäume";
   init[idx].function = trees_init;
   idx++;
 
@@ -110,7 +110,7 @@ void gearup_init( void )
   idx++;
 
   init[idx].status = 0;
-  init[idx].text = "Er�ffnungsbildschirm wird initalisiert";
+  init[idx].text = "Eröffnungsbildschirm wird initalisiert";
   init[idx].function = splash_init;
   idx++;
 

@@ -5,6 +5,7 @@
 #ifdef __APPLE__
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
+#include <AudioToolbox/AudioToolbox.h>
 #else
 #include <AL/al.h>
 #include <AL/alc.h>
@@ -68,31 +69,178 @@ static WavData* create_silent_wav(float duration) {
     return wav;
 }
 
+#ifdef __APPLE__
+/* Decode any WAV variant CoreAudio understands (PCM, Microsoft ADPCM,
+   WAVE_FORMAT_EXTENSIBLE, ...) into interleaved signed 16-bit PCM. */
+static WavData* loadWavWithCoreAudio(const char* path, const char* filename) {
+    CFURLRef url;
+    ExtAudioFileRef file = NULL;
+    AudioStreamBasicDescription fileFormat;
+    AudioStreamBasicDescription pcmFormat;
+    UInt32 propertySize;
+    SInt64 totalFrames = 0;
+    const UInt32 framesPerRead = 16384;
+    unsigned char* samples = NULL;
+    size_t capacity = 0;
+    size_t used = 0;
+    WavData* wav;
+
+    url = CFURLCreateFromFileSystemRepresentation(NULL, (const UInt8*)path, strlen(path), false);
+    if (!url) {
+        fprintf(stderr, "Warning: Failed to open WAV file for decoding: %s, using silent audio\n", filename);
+        return create_silent_wav(1.0f);
+    }
+
+    if (ExtAudioFileOpenURL(url, &file) != noErr) {
+        CFRelease(url);
+        fprintf(stderr, "Warning: Failed to decode WAV file: %s, using silent audio\n", filename);
+        return create_silent_wav(1.0f);
+    }
+
+    CFRelease(url);
+
+    propertySize = sizeof(fileFormat);
+    if ((ExtAudioFileGetProperty(file, kExtAudioFileProperty_FileDataFormat, &propertySize, &fileFormat) != noErr) ||
+        (fileFormat.mChannelsPerFrame == 0)) {
+        ExtAudioFileDispose(file);
+        fprintf(stderr, "Warning: Failed to read WAV format for %s, using silent audio\n", filename);
+        return create_silent_wav(1.0f);
+    }
+
+    memset(&pcmFormat, 0, sizeof(pcmFormat));
+    pcmFormat.mSampleRate = fileFormat.mSampleRate;
+    pcmFormat.mFormatID = kAudioFormatLinearPCM;
+    pcmFormat.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
+    pcmFormat.mBitsPerChannel = 16;
+    pcmFormat.mChannelsPerFrame = fileFormat.mChannelsPerFrame;
+    pcmFormat.mFramesPerPacket = 1;
+    pcmFormat.mBytesPerFrame = 2 * pcmFormat.mChannelsPerFrame;
+    pcmFormat.mBytesPerPacket = pcmFormat.mBytesPerFrame;
+
+    if (ExtAudioFileSetProperty(file, kExtAudioFileProperty_ClientDataFormat, sizeof(pcmFormat), &pcmFormat) != noErr) {
+        ExtAudioFileDispose(file);
+        fprintf(stderr, "Warning: Failed to set PCM output format for %s, using silent audio\n", filename);
+        return create_silent_wav(1.0f);
+    }
+
+    propertySize = sizeof(totalFrames);
+    if ((ExtAudioFileGetProperty(file, kExtAudioFileProperty_FileLengthFrames, &propertySize, &totalFrames) != noErr) ||
+        (totalFrames < 0)) {
+        totalFrames = 0;
+    }
+
+    /* Preallocate from the frame count when it is known */
+    if (totalFrames > 0) {
+        size_t estimate = (size_t)totalFrames * pcmFormat.mBytesPerFrame;
+
+        if (estimate >= 65536) {
+            samples = (unsigned char*)malloc(estimate);
+            if (samples) {
+                capacity = estimate;
+            }
+        }
+    }
+
+    for (;;) {
+        size_t needed = used + (size_t)framesPerRead * pcmFormat.mBytesPerFrame;
+        AudioBufferList bufferList;
+        UInt32 frames;
+
+        if (needed > capacity) {
+            size_t newCapacity = (needed < 65536) ? 65536 : needed + needed / 2;
+            unsigned char* grown = (unsigned char*)realloc(samples, newCapacity);
+
+            if (!grown) {
+                free(samples);
+                ExtAudioFileDispose(file);
+                fprintf(stderr, "Warning: Memory allocation failed for %s, using silent audio\n", filename);
+                return create_silent_wav(1.0f);
+            }
+
+            samples = grown;
+            capacity = newCapacity;
+        }
+
+        bufferList.mNumberBuffers = 1;
+        bufferList.mBuffers[0].mNumberChannels = pcmFormat.mChannelsPerFrame;
+        bufferList.mBuffers[0].mDataByteSize = framesPerRead * pcmFormat.mBytesPerFrame;
+        bufferList.mBuffers[0].mData = samples + used;
+
+        frames = framesPerRead;
+        if (ExtAudioFileRead(file, &frames, &bufferList) != noErr) {
+            break;
+        }
+
+        if (frames == 0) {
+            break;
+        }
+
+        used += (size_t)frames * pcmFormat.mBytesPerFrame;
+    }
+
+    ExtAudioFileDispose(file);
+
+    if (used == 0) {
+        free(samples);
+        fprintf(stderr, "Warning: Failed to read audio data for %s, using silent audio\n", filename);
+        return create_silent_wav(1.0f);
+    }
+
+    wav = (WavData*)malloc(sizeof(WavData));
+    if (!wav) {
+        free(samples);
+        fprintf(stderr, "Warning: Memory allocation failed for %s, using silent audio\n", filename);
+        return create_silent_wav(1.0f);
+    }
+
+    wav->data = samples;
+    wav->size = (int)used;
+    wav->sampleRate = (int)pcmFormat.mSampleRate;
+    wav->channels = (int)pcmFormat.mChannelsPerFrame;
+    wav->bitsPerSample = 16;
+
+    printf("Successfully loaded: %s (%d Hz, %d channels, %d bits%s)\n",
+           filename, wav->sampleRate, wav->channels, wav->bitsPerSample,
+           (fileFormat.mFormatID != kAudioFormatLinearPCM) ? ", decoded from compressed source" : "");
+
+    return wav;
+}
+#endif
+
 static WavData* loadWav(const char* filename) {
     FILE* fp;
     char path[512];
-    WavData* wav = NULL;
-    char tried_paths[512];
 
     /* Try different paths */
-    fp = fopen(filename, "rb");
-    snprintf(tried_paths, sizeof(tried_paths), "%s", filename);
+    snprintf(path, sizeof(path), "%s", filename);
+    fp = fopen(path, "rb");
 
     if (!fp) {
         snprintf(path, sizeof(path), "data/%s", filename);
         fp = fopen(path, "rb");
-        snprintf(tried_paths, sizeof(tried_paths), "%s, %s", tried_paths, path);
-        if (!fp) {
-            snprintf(path, sizeof(path), "../data/%s", filename);
-            fp = fopen(path, "rb");
-            snprintf(tried_paths, sizeof(tried_paths), "%s, %s", tried_paths, path);
-            if (!fp) {
-                fprintf(stderr, "Warning: Failed to open WAV file (tried: %s)\n", tried_paths);
-                fprintf(stderr, "         Using silent audio\n");
-                return create_silent_wav(1.0f);  /* 1 second of silence */
-            }
-        }
     }
+
+    if (!fp) {
+        snprintf(path, sizeof(path), "../data/%s", filename);
+        fp = fopen(path, "rb");
+    }
+
+    if (!fp) {
+        fprintf(stderr, "Warning: Failed to open WAV file (tried: %s, data/%s, ../data/%s)\n",
+                filename, filename, filename);
+        fprintf(stderr, "         Using silent audio\n");
+        return create_silent_wav(1.0f);
+    }
+
+#ifdef __APPLE__
+    /* Let CoreAudio decode the file. It understands PCM as well as
+       compressed formats like Microsoft ADPCM (format 0x0002), which the
+       hand-written RIFF parser below cannot read. */
+    fclose(fp);
+    return loadWavWithCoreAudio(path, filename);
+#else
+    {
+    WavData* wav = NULL;
 
     wav = (WavData*)malloc(sizeof(WavData));
     if (!wav) {
@@ -147,6 +295,12 @@ static WavData* loadWav(const char* filename) {
         return create_silent_wav(1.0f);
     }
 
+    /* The fmt chunk can be larger than the 16 bytes read above (cbSize or
+       WAVE_FORMAT_EXTENSIBLE); skip the remainder before looking for data. */
+    if (chunkSize > 16) {
+        fseek(fp, (long)(chunkSize - 16), SEEK_CUR);
+    }
+
     /* Skip to data chunk */
     if (fread(chunkID, 1, 4, fp) != 4 || fread(&chunkSize, 4, 1, fp) != 1) {
         fprintf(stderr, "Warning: Failed to find data chunk for %s, using silent audio\n", filename);
@@ -156,7 +310,8 @@ static WavData* loadWav(const char* filename) {
     }
 
     while (memcmp(chunkID, "data", 4) != 0 && !feof(fp)) {
-        fseek(fp, chunkSize, SEEK_CUR);
+        /* RIFF chunks are word aligned */
+        fseek(fp, (long)chunkSize + (long)(chunkSize & 1), SEEK_CUR);
         if (fread(chunkID, 1, 4, fp) != 4 || fread(&chunkSize, 4, 1, fp) != 1) {
             break;
         }
@@ -196,6 +351,8 @@ static WavData* loadWav(const char* filename) {
            filename, sampleRate, numChannels, bitsPerSample);
 
     return wav;
+    }
+#endif
 }
 
 static void freeWav(WavData* wav) {

@@ -197,28 +197,28 @@ void splash_draw( double timeDiff )
       text_nLn( 4 );
 
       text_drawTextLn( 0, "Dieses Programm wurde im Rahmen des Faches Graphische Datenverarbeitung" );
-      text_drawTextLn( 0, "an der Berufsakademie Stuttgart von Markus Bl�mchen und Matthias Diester" );
+      text_drawTextLn( 0, "an der Berufsakademie Stuttgart von Markus Blümchen und Matthias Diester" );
       text_drawTextLn( 0, "entwickelt." );
       text_Ln();
 
       text_drawTextLn( 0, "Folgende Anforderungen sollten eingearbeitet werden:" );
-      text_drawTextLn( 0, "Die Demo oder das Spiel soll eine kurze Story enthalten oder erz�hlen." );
+      text_drawTextLn( 0, "Die Demo oder das Spiel soll eine kurze Story enthalten oder erzählen." );
       text_drawTextLn( 0, "1 Objekt, erzeugt mit Blender (Blender File muss mitabgegeben werden)" );
       text_drawTextLn( 0, "1 Objekt, erzeugt im Code" );
       text_drawTextLn( 0, "1 texturiertes Objekt" );
       text_drawTextLn( 0, "1 Lichtquelle (korrekt beleuchtete Objekte)" );
       text_drawTextLn( 0, "1 Effekt (optisch, geometrisch, mathematisch, ...)" );
       text_drawTextLn( 0, "1 Animation (bewegte Objekte und/oder bewegte Kamera, ...)" );
-      text_drawTextLn( 0, "Die Animationen / Bewegungen m�ssen von der Zeit abh�ngen." );
+      text_drawTextLn( 0, "Die Animationen / Bewegungen müssen von der Zeit abhängen." );
       text_drawTextLn( 0, "Abbruch jederzeit per ESCape" );
       text_drawTextLn( 0, "Es muss das gegebene Framework als Basis verwendet werden." );
-      text_drawTextLn( 0, "Sollte Plattform unabh�ngig programmiert sein." );
+      text_drawTextLn( 0, "Sollte Plattform unabhängig programmiert sein." );
       text_drawTextLn( 0, "Muss in irgendeiner Form das BA Logo enthalten." );
-      text_drawTextLn( 0, "Die Namen der Beteiligten m�ssen in irgendeiner Form enthalten sein (Vorspann/Abspann) (Fotos k�nnen auch eingebunden werden)." );
+      text_drawTextLn( 0, "Die Namen der Beteiligten müssen in irgendeiner Form enthalten sein (Vorspann/Abspann) (Fotos können auch eingebunden werden)." );
       text_drawTextLn( 0, "Wenn Sound eingebaut sein soll nur mit fmod (liegt dem Framework bei)." );
       text_drawTextLn( 0, "Urheberrecht bei allem beachten!" );
       text_drawTextLn( 0, "Demo: Demo bzw. Animation muss Endlos laufen." );
-      text_drawTextLn( 0, "Spiel: Bei dr�cken von F1 muss die Tastaturbelegung (Steuerung) angezeigt werden und eventuell eine kurze Spielerkl�rung." );
+      text_drawTextLn( 0, "Spiel: Bei drücken von F1 muss die Tastaturbelegung (Steuerung) angezeigt werden und eventuell eine kurze Spielerklärung." );
 
       text_resetTextOffset();
       break;

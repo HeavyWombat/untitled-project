@@ -190,7 +190,7 @@ void help_drawHelp( double timeDiff )
   text_nLn( 4 );
 
   text_drawTextLn( offset, "Ziel des Spiels ..." );
-  text_drawTextLn( offset, "bis jetzt noch: Einfach die Klappfallscheiben abschie�en" );
+  text_drawTextLn( offset, "bis jetzt noch: Einfach die Klappfallscheiben abschießen" );
   text_nLn( 2 );
 
   text_drawTextLn( offset, "Tastaturbelegung:" );
@@ -199,12 +199,20 @@ void help_drawHelp( double timeDiff )
   text_drawTextLn( offset, " F4  ...  Dunkelheit ein/aus" );
   text_drawTextLn( offset, " F5  ...  Nebel ein/aus" );
   text_drawTextLn( offset, " F6  ...  Bildschirmabdruck (buggy im Vollbildmodus!)" );
-  text_drawTextLn( offset, " F7  ...  Maus entlassen und f�r die Fensterarbeit freigeben" );
-  text_drawTextLn( offset, " F8  ...  Z�hler f�r Bilder pro Sekunde ein/aus" );
+  text_drawTextLn( offset, " F7  ...  Maus entlassen und für die Fensterarbeit freigeben" );
+  text_drawTextLn( offset, " F8  ...  Zähler für Bilder pro Sekunde ein/aus" );
   text_drawTextLn( offset, " F9  ...  Wechsel zwischen Testtexturierung und korrekter" );
   text_drawTextLn( offset, "F10  ...  Wechsel zwischen Texturierung, Drahtgitterdarstellung und Punktdarstellung" );
   text_drawTextLn( offset, "F11  ...  Koordinatenkreuz und Zeiger ein/aus" );
   text_drawTextLn( offset, "F12  ...  Vollbildmodus ein/aus" );
+  text_nLn( 2 );
+
+  text_drawTextLn( offset, "Steuerung in Personensicht:" );
+  text_drawTextLn( offset, " W A S D  ...  laufen,  Maus  ...  umschauen" );
+  text_drawTextLn( offset, " 1 / 2 / 3  ...  Personensicht, Reflexvisier, 3-fach-Visier" );
+  text_drawTextLn( offset, " R  ...  nachladen" );
+  text_drawTextLn( offset, " G  ...  Einzelfeuer,  B  ...  Feuerstoß" );
+  text_drawTextLn( offset, " linke Maustaste  ...  Schuss abgeben (Visier erforderlich)" );
 
   text_resetTextOffset();
 

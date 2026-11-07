@@ -4,10 +4,12 @@
 #import <OpenGL/OpenGL.h>
 #import <mach/mach_time.h>
 #import <CoreGraphics/CoreGraphics.h>
+#import <CoreText/CoreText.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <gdv_os.h>
 
 /* macOS Platform Layer Implementation */
@@ -34,6 +36,11 @@ static double gdv_os_currentTime = 0;
 
 static int isFontInitialised = 0;
 
+static int gdv_os_cursorHidden = 0;
+static int gdv_os_mouseRelative = 0;
+static double gdv_os_virtualMouseX = 0.0;
+static double gdv_os_virtualMouseY = 0.0;
+
 int (*gdv_os_mainloopFunction)(void) = NULL;
 void (*gdv_os_windowEventFunction)(GDV_BaseEvent* event) = NULL;
 void (*gdv_os_mouseEventFunction)(GDV_BaseEvent* event) = NULL;
@@ -42,6 +49,71 @@ void (*gdv_os_keyEventFunction)(GDV_BaseEvent* event) = NULL;
 /* Forward declarations */
 int gdv_os_openWindow_intern(char* title, int width, int height, int fullscreen);
 int gdv_os_translateEventToCommonTable(NSEvent* event);
+
+/* Convert a top-down view coordinate into CoreGraphics' global coordinate
+   space. Window frames and screen heights are in points, so the conversion
+   goes through Cocoa's point-based APIs; CGDisplayPixelsHigh returns device
+   pixels, which put the warp target off target on Retina displays. */
+static CGPoint gdv_os_viewPointToCGPoint(double x, double y) {
+    NSPoint viewPoint = NSMakePoint((CGFloat)x, [gdv_os_glView bounds].size.height - (CGFloat)y);
+    NSPoint windowPoint = [gdv_os_glView convertPoint:viewPoint toView:nil];
+    NSPoint screenPoint = [gdv_os_window convertPointToScreen:windowPoint];
+    CGFloat mainScreenTop = NSMaxY([[[NSScreen screens] objectAtIndex:0] frame]);
+
+    return CGPointMake(screenPoint.x, mainScreenTop - screenPoint.y);
+}
+
+static void gdv_os_warpMouseToViewPoint(double x, double y) {
+    if (!gdv_os_window || !gdv_os_glView) {
+        return;
+    }
+
+    CGWarpMouseCursorPosition(gdv_os_viewPointToCGPoint(x, y));
+}
+
+/* Grab-style mouse mode: place the cursor in the middle of the view and then
+   decouple it from the pointer, so the window server keeps delivering move
+   events with delta data while the cursor itself stays put. Warping the
+   cursor back after every single event (the previous approach) gets throttled
+   by the window server, which made movement stutter and eventually stall. */
+static void gdv_os_enterRelativeMode(void) {
+    if (!gdv_os_window || !gdv_os_glView) {
+        return;
+    }
+
+    gdv_os_virtualMouseX = [gdv_os_glView bounds].size.width / 2.0;
+    gdv_os_virtualMouseY = [gdv_os_glView bounds].size.height / 2.0;
+
+    gdv_os_warpMouseToViewPoint(gdv_os_virtualMouseX, gdv_os_virtualMouseY);
+
+    CGError error = CGAssociateMouseAndMouseCursorPosition(false);
+    gdv_os_mouseRelative = (error == kCGErrorSuccess);
+}
+
+static void gdv_os_leaveRelativeMode(void) {
+    if (gdv_os_mouseRelative) {
+        CGAssociateMouseAndMouseCursorPosition(true);
+        gdv_os_mouseRelative = 0;
+    }
+}
+
+static void gdv_os_sendMouseEvent(GDV_EventType eventType, NSPoint viewLocation, int wheelDelta) {
+    if (gdv_os_mouseEventFunction == NULL) {
+        return;
+    }
+
+    GDV_Event_Mouse me = {eventType, 0, 0, wheelDelta};
+
+    if (gdv_os_mouseRelative) {
+        me.xPos = (int)gdv_os_virtualMouseX;
+        me.yPos = (int)gdv_os_virtualMouseY;
+    } else {
+        me.xPos = (int)viewLocation.x;
+        me.yPos = (int)([gdv_os_glView bounds].size.height - viewLocation.y);
+    }
+
+    gdv_os_mouseEventFunction((GDV_BaseEvent*)&me);
+}
 
 /* Custom OpenGL View */
 @interface GDVOpenGLView : NSOpenGLView
@@ -70,68 +142,36 @@ int gdv_os_translateEventToCommonTable(NSEvent* event);
 }
 
 - (void)mouseDown:(NSEvent *)event {
-    if (gdv_os_mouseEventFunction) {
-        NSPoint location = [self convertPoint:[event locationInWindow] fromView:nil];
-        GDV_Event_Mouse me = {
-            GDV_EVENT_MOUSE_DOWN_LEFT_BUTTON,
-            (int)location.x,
-            (int)([self bounds].size.height - location.y),
-            0
-        };
-        gdv_os_mouseEventFunction((GDV_BaseEvent*)&me);
-    }
+    NSPoint location = [self convertPoint:[event locationInWindow] fromView:nil];
+    gdv_os_sendMouseEvent(GDV_EVENT_MOUSE_DOWN_LEFT_BUTTON, location, 0);
 }
 
 - (void)mouseUp:(NSEvent *)event {
-    if (gdv_os_mouseEventFunction) {
-        NSPoint location = [self convertPoint:[event locationInWindow] fromView:nil];
-        GDV_Event_Mouse me = {
-            GDV_EVENT_MOUSE_UP_LEFT_BUTTON,
-            (int)location.x,
-            (int)([self bounds].size.height - location.y),
-            0
-        };
-        gdv_os_mouseEventFunction((GDV_BaseEvent*)&me);
-    }
+    NSPoint location = [self convertPoint:[event locationInWindow] fromView:nil];
+    gdv_os_sendMouseEvent(GDV_EVENT_MOUSE_UP_LEFT_BUTTON, location, 0);
 }
 
 - (void)rightMouseDown:(NSEvent *)event {
-    if (gdv_os_mouseEventFunction) {
-        NSPoint location = [self convertPoint:[event locationInWindow] fromView:nil];
-        GDV_Event_Mouse me = {
-            GDV_EVENT_MOUSE_DOWN_RIGHT_BUTTON,
-            (int)location.x,
-            (int)([self bounds].size.height - location.y),
-            0
-        };
-        gdv_os_mouseEventFunction((GDV_BaseEvent*)&me);
-    }
+    NSPoint location = [self convertPoint:[event locationInWindow] fromView:nil];
+    gdv_os_sendMouseEvent(GDV_EVENT_MOUSE_DOWN_RIGHT_BUTTON, location, 0);
 }
 
 - (void)rightMouseUp:(NSEvent *)event {
-    if (gdv_os_mouseEventFunction) {
-        NSPoint location = [self convertPoint:[event locationInWindow] fromView:nil];
-        GDV_Event_Mouse me = {
-            GDV_EVENT_MOUSE_UP_RIGHT_BUTTON,
-            (int)location.x,
-            (int)([self bounds].size.height - location.y),
-            0
-        };
-        gdv_os_mouseEventFunction((GDV_BaseEvent*)&me);
-    }
+    NSPoint location = [self convertPoint:[event locationInWindow] fromView:nil];
+    gdv_os_sendMouseEvent(GDV_EVENT_MOUSE_UP_RIGHT_BUTTON, location, 0);
 }
 
 - (void)mouseMoved:(NSEvent *)event {
-    if (gdv_os_mouseEventFunction) {
-        NSPoint location = [self convertPoint:[event locationInWindow] fromView:nil];
-        GDV_Event_Mouse me = {
-            GDV_EVENT_MOUSE_MOVE,
-            (int)location.x,
-            (int)([self bounds].size.height - location.y),
-            0
-        };
-        gdv_os_mouseEventFunction((GDV_BaseEvent*)&me);
+    /* In relative mode the cursor does not move; movement comes from the
+       event deltas (y positive means downward, matching the top-down view
+       coordinates the game expects). */
+    if (gdv_os_mouseRelative) {
+        gdv_os_virtualMouseX += [event deltaX];
+        gdv_os_virtualMouseY += [event deltaY];
     }
+
+    NSPoint location = [self convertPoint:[event locationInWindow] fromView:nil];
+    gdv_os_sendMouseEvent(GDV_EVENT_MOUSE_MOVE, location, 0);
 }
 
 - (void)mouseDragged:(NSEvent *)event {
@@ -143,16 +183,8 @@ int gdv_os_translateEventToCommonTable(NSEvent* event);
 }
 
 - (void)scrollWheel:(NSEvent *)event {
-    if (gdv_os_mouseEventFunction) {
-        NSPoint location = [self convertPoint:[event locationInWindow] fromView:nil];
-        GDV_Event_Mouse me = {
-            GDV_EVENT_MOUSE_WHEEL,
-            (int)location.x,
-            (int)([self bounds].size.height - location.y),
-            (int)([event deltaY] * 120)  // Convert to Windows-style delta
-        };
-        gdv_os_mouseEventFunction((GDV_BaseEvent*)&me);
-    }
+    NSPoint location = [self convertPoint:[event locationInWindow] fromView:nil];
+    gdv_os_sendMouseEvent(GDV_EVENT_MOUSE_WHEEL, location, (int)([event deltaY] * 120));  // Convert to Windows-style delta
 }
 
 - (void)keyDown:(NSEvent *)event {
@@ -186,7 +218,15 @@ int gdv_os_translateEventToCommonTable(NSEvent* event);
 @implementation GDVWindowDelegate
 
 - (void)windowWillClose:(NSNotification *)notification {
+    gdv_os_leaveRelativeMode();
     [NSApp terminate:nil];
+}
+
+- (void)windowDidBecomeKey:(NSNotification *)notification {
+    /* Re-grab the mouse after regaining focus so look movement keeps flowing */
+    if (gdv_os_cursorHidden) {
+        gdv_os_enterRelativeMode();
+    }
 }
 
 - (void)windowDidResize:(NSNotification *)notification {
@@ -207,6 +247,8 @@ int gdv_os_translateEventToCommonTable(NSEvent* event);
 }
 
 @end
+
+static GDVWindowDelegate* gdv_os_windowDelegate = nil;
 
 /* Implementation */
 
@@ -295,7 +337,10 @@ int gdv_os_openWindow_intern(char* title, int width, int height, int fullscreen)
         }
 
         [gdv_os_window setTitle:[NSString stringWithUTF8String:title]];
-        [gdv_os_window setDelegate:[[GDVWindowDelegate alloc] init]];
+        if (gdv_os_windowDelegate == nil) {
+            gdv_os_windowDelegate = [[GDVWindowDelegate alloc] init];
+        }
+        [gdv_os_window setDelegate:gdv_os_windowDelegate];
         [gdv_os_window center];
         [gdv_os_window makeKeyAndOrderFront:nil];
 
@@ -341,6 +386,24 @@ int gdv_os_openWindow_intern(char* title, int width, int height, int fullscreen)
 
         [gdv_os_window setContentView:gdv_os_glView];
 
+        /* Let the game know the new window size (the window may have been
+           recreated in a different size, e.g. by a fullscreen toggle) */
+        {
+            NSRect viewBounds = [gdv_os_glView bounds];
+
+            gdv_os_width = viewBounds.size.width;
+            gdv_os_height = viewBounds.size.height;
+
+            if (gdv_os_windowEventFunction) {
+                GDV_Event_Window_Size ws = {
+                    GDV_EVENT_WINDOW_SIZE,
+                    viewBounds.size.width,
+                    viewBounds.size.height
+                };
+                gdv_os_windowEventFunction((GDV_BaseEvent*)&ws);
+            }
+        }
+
         /* Use a 1x OpenGL surface so the viewport (set in points) matches the
            actual framebuffer. Without this, Retina displays create a 2x
            surface while the game still uses point dimensions, causing the
@@ -361,6 +424,12 @@ int gdv_os_openWindow_intern(char* title, int width, int height, int fullscreen)
         [gdv_os_window makeFirstResponder:gdv_os_glView];
         [NSApp activateIgnoringOtherApps:YES];
 
+        /* Re-grab mouse look if the window was recreated while the cursor
+           is hidden (e.g. fullscreen toggle) */
+        if (gdv_os_cursorHidden) {
+            gdv_os_enterRelativeMode();
+        }
+
         /* Initialize font rendering placeholder */
         if (isFontInitialised == 0) {
             isFontInitialised = 1;
@@ -373,12 +442,19 @@ int gdv_os_openWindow_intern(char* title, int width, int height, int fullscreen)
 
 int gdv_os_closeWindow() {
     @autoreleasepool {
+        gdv_os_leaveRelativeMode();
+
         if (gdv_os_glContext) {
             [NSOpenGLContext clearCurrentContext];
             gdv_os_glContext = nil;
         }
 
         if (gdv_os_window) {
+            /* Detach the delegate so that closing the window as part of an
+               internal recreation (e.g. fullscreen toggle) does not trigger
+               the delegate's terminate-on-close behavior, which would quit
+               the whole application. */
+            [gdv_os_window setDelegate:nil];
             [gdv_os_window close];
             gdv_os_window = nil;
         }
@@ -439,6 +515,8 @@ int gdv_os_runMainloop() {
                 [[gdv_os_glView window] displayIfNeeded];
             }
         }
+
+        gdv_os_leaveRelativeMode();
     }
 
     return GDV_OK;
@@ -483,15 +561,20 @@ void gdv_os_setWindowTitle(char* title) {
 
 void gdv_os_showCursor(int visible) {
     @autoreleasepool {
+        gdv_os_cursorHidden = (visible == 0) ? 1 : 0;
+
         if (visible == 1) {
+            gdv_os_leaveRelativeMode();
             [NSCursor unhide];
         } else {
             [NSCursor hide];
+            gdv_os_enterRelativeMode();
         }
     }
 }
 
 void gdv_os_exit() {
+    gdv_os_leaveRelativeMode();
     [NSApp terminate:nil];
 }
 
@@ -499,14 +582,18 @@ int gdv_os_setMousePosition(long x, long y, int absoluteRelativeFlag, long* resu
     @autoreleasepool {
         if (absoluteRelativeFlag == 0) {
             /* Absolute positioning */
-            if (!gdv_os_window) {
+            if (!gdv_os_window || !gdv_os_glView) {
                 return GDV_ERROR;
             }
 
-            NSRect windowFrame = [gdv_os_window frame];
-            CGPoint point = CGPointMake(windowFrame.origin.x + x,
-                                       CGDisplayPixelsHigh(kCGDirectMainDisplay) - (windowFrame.origin.y + windowFrame.size.height - y));
-            CGWarpMouseCursorPosition(point);
+            if (gdv_os_mouseRelative) {
+                /* The cursor is decoupled from the pointer; only re-anchor the
+                   virtual position so the next event's delta starts from here. */
+                gdv_os_virtualMouseX = (double)x;
+                gdv_os_virtualMouseY = (double)y;
+            } else {
+                gdv_os_warpMouseToViewPoint((double)x, (double)y);
+            }
 
             if (resultX) *resultX = x;
             if (resultY) *resultY = y;
@@ -525,9 +612,191 @@ void gdv_os_drawOutlinedText(const char *text, ...) {
     /* For now, this is a stub */
 }
 
+static CTFontRef gdv_os_textFont = NULL;
+
+static CTFontRef gdv_os_getTextFont(void) {
+    if (gdv_os_textFont == NULL) {
+        /* Same face and height as the Windows implementation */
+        gdv_os_textFont = CTFontCreateWithName(CFSTR("Courier New"), 12.0, NULL);
+    }
+
+    return gdv_os_textFont;
+}
+
+static void gdv_os_drawTextLine(const char* line, size_t length, float x, float baselineY) {
+    CFStringRef string;
+    CFStringRef attributeKeys[2];
+    CFTypeRef attributeValues[2];
+    CFDictionaryRef attributes;
+    CFAttributedStringRef attributedString;
+    CTLineRef textLine;
+    CGColorSpaceRef colorSpace;
+    CGColorRef textColor;
+    CGContextRef colorContext;
+    const CGFloat whiteComponents[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    CGFloat ascent = 0.0f;
+    CGFloat descent = 0.0f;
+    CGFloat leading = 0.0f;
+    double lineWidth;
+    size_t imageWidth;
+    size_t imageHeight;
+    size_t rowBytes;
+    unsigned char* pixels;
+    GLint unpackAlignment;
+
+    if (length == 0) {
+        return;
+    }
+
+    string = CFStringCreateWithBytes(NULL, (const UInt8*)line, (CFIndex)length, kCFStringEncodingUTF8, false);
+    if (string == NULL) {
+        /* Fall back to Latin-1 for strings that are not valid UTF-8 */
+        string = CFStringCreateWithBytes(NULL, (const UInt8*)line, (CFIndex)length, kCFStringEncodingISOLatin1, false);
+    }
+    if (string == NULL) {
+        return;
+    }
+
+    /* CoreText draws glyphs in black unless a foreground color attribute is
+       present (it does not use the context fill color by default). */
+    colorSpace = CGColorSpaceCreateDeviceRGB();
+    textColor = CGColorCreate(colorSpace, whiteComponents);
+
+    attributeKeys[0] = kCTFontAttributeName;
+    attributeValues[0] = gdv_os_getTextFont();
+    attributeKeys[1] = kCTForegroundColorAttributeName;
+    attributeValues[1] = textColor;
+    attributes = CFDictionaryCreate(NULL, (const void**)attributeKeys, (const void**)attributeValues, 2,
+                                    &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    attributedString = CFAttributedStringCreate(NULL, string, attributes);
+    CFRelease(attributes);
+    CFRelease(string);
+
+    if (attributedString == NULL) {
+        CFRelease(textColor);
+        CGColorSpaceRelease(colorSpace);
+        return;
+    }
+
+    textLine = CTLineCreateWithAttributedString(attributedString);
+    CFRelease(attributedString);
+    CFRelease(textColor);
+
+    if (textLine == NULL) {
+        CGColorSpaceRelease(colorSpace);
+        return;
+    }
+
+    lineWidth = CTLineGetTypographicBounds(textLine, &ascent, &descent, &leading);
+
+    imageWidth = (size_t)ceil(lineWidth) + 2;
+    imageHeight = (size_t)ceil(ascent + descent) + 2;
+    rowBytes = imageWidth * 4;
+
+    if ((imageWidth == 0) || (imageHeight == 0) || (imageWidth > 1024) || (imageHeight > 64)) {
+        CFRelease(textLine);
+        CGColorSpaceRelease(colorSpace);
+        return;
+    }
+
+    pixels = (unsigned char*)calloc(rowBytes * imageHeight, 1);
+    if (pixels == NULL) {
+        CFRelease(textLine);
+        CGColorSpaceRelease(colorSpace);
+        return;
+    }
+
+    colorContext = CGBitmapContextCreate(pixels, imageWidth, imageHeight, 8, rowBytes, colorSpace, kCGImageAlphaPremultipliedLast);
+    CGColorSpaceRelease(colorSpace);
+
+    if (colorContext == NULL) {
+        free(pixels);
+        CFRelease(textLine);
+        return;
+    }
+
+    /* White antialiased text on the (calloc'd) transparent background.
+       Premultiplied RGBA is uploaded with a GL_ONE blend, so the coverage
+       ends up in the framebuffer correctly. A GL_ALPHA upload would be
+       silently dropped by the GL-on-Metal driver. */
+    CGContextSetTextMatrix(colorContext, CGAffineTransformIdentity);
+    CGContextSetTextPosition(colorContext, 0.0f, descent + 1.0f);
+    CTLineDraw(textLine, colorContext);
+
+    CGContextRelease(colorContext);
+    CFRelease(textLine);
+
+    // ---
+
+    /* Draw at the current raster position (window coordinates), keeping the
+       baseline there like the Windows bitmap font does. */
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+    glGetIntegerv(GL_UNPACK_ALIGNMENT, &unpackAlignment);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+    /* Bitmap memory is top-down, so flip it while drawing */
+    glPixelZoom(1.0f, -1.0f);
+    glWindowPos2f(x, baselineY + (float)imageHeight - (float)descent - 1.0f);
+    glDrawPixels((GLsizei)imageWidth, (GLsizei)imageHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glPixelZoom(1.0f, 1.0f);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, unpackAlignment);
+    glPopAttrib();
+
+    free(pixels);
+}
+
 void gdv_os_drawBitmappedText(const char *text, ...) {
-    /* TODO: Implement with CoreText or FreeType */
-    /* For now, this is a stub */
+    char expandedText[512];
+    const char* lineStart;
+    va_list ap;
+    GLboolean rasterPositionValid = GL_TRUE;
+    GLfloat rasterPosition[4];
+    float x;
+    float y;
+
+    if (text == NULL) {
+        return;
+    }
+
+    if (gdv_os_getTextFont() == NULL) {
+        return;
+    }
+
+    va_start(ap, text);
+    vsnprintf(expandedText, sizeof(expandedText), text, ap);
+    va_end(ap);
+
+    glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &rasterPositionValid);
+    if (rasterPositionValid != GL_TRUE) {
+        return;
+    }
+
+    glGetFloatv(GL_CURRENT_RASTER_POSITION, rasterPosition);
+
+    x = rasterPosition[0];
+    y = rasterPosition[1];
+
+    lineStart = expandedText;
+    for (;;) {
+        const char* lineEnd = strchr(lineStart, '\n');
+        size_t lineLength = (lineEnd != NULL) ? (size_t)(lineEnd - lineStart) : strlen(lineStart);
+
+        gdv_os_drawTextLine(lineStart, lineLength, x, y);
+
+        if (lineEnd == NULL) {
+            break;
+        }
+
+        lineStart = lineEnd + 1;
+        y -= 14.0f;  /* Same line step as the Windows implementation */
+    }
 }
 
 int gdv_os_createScreenshot() {

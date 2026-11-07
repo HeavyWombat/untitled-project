@@ -23,6 +23,72 @@ This project was created as part of a university course on 3D graphics programmi
 - Heads-Up Display (HUD) with shooting feedback
 - Spatial audio system for immersive sound effects
 
+## Controls
+
+The same list is available in-game via F1.
+
+### General
+
+| Key | Action |
+| --- | --- |
+| Esc | Quit the program |
+| F1 | Toggle the help screen |
+| F2 | Toggle motion blur (disabled in the macOS port) |
+| F3 | Toggle between free flight and person view |
+| F4 | Toggle the light source |
+| F5 | Toggle fog |
+| F6 | Save a screenshot (writes `Screenshot_###.tga`; unreliable in fullscreen) |
+| F7 | Release the mouse for window work / recapture it |
+| F8 | Toggle the FPS counter |
+| F9 | Toggle test texturing / correct texturing |
+| F10 | Cycle polygon mode (filled, wireframe, points) |
+| F11 | Toggle coordinate cross and pointer |
+| F12 | Toggle fullscreen |
+
+### Movement
+
+Free flight (default camera mode):
+
+| Key | Action |
+| --- | --- |
+| W / S | Fly forward / backward |
+| A / D | Strafe left / right |
+| Up / Down arrow | Fly up / down |
+| Mouse | Look around |
+
+Person view (after F3):
+
+| Key | Action |
+| --- | --- |
+| W / S / A / D | Walk |
+| F (hold) | Kneel |
+| C (hold) | Crouch |
+| Mouse | Look around |
+
+### Weapon
+
+| Key | Action |
+| --- | --- |
+| Left mouse button | Fire (reflex sight or scope view only; hold in burst mode) |
+| R | Reload (takes 5 seconds) |
+| T | Safe (no firing) |
+| G | Single fire |
+| B | Burst fire (hold the mouse button to fire continuously) |
+| 1 | Person view |
+| 2 | Reflex sight (firing enabled) |
+| 3 | 3x optical scope (firing enabled) |
+
+Note: the camera mode keys (1, 2, 3) only work after leaving free flight with F3.
+
+### Intro screens
+
+| Key | Action |
+| --- | --- |
+| Left / Right arrow | Rotate the model |
+| Up / Down arrow | Move the model |
+| Home / End | Zoom in / out |
+| Space | Continue to the 3D scene |
+
 ## Prerequisites
 
 ⚠️ **Asset files not included:** This repository contains source code only. You must supply your own texture and audio assets.

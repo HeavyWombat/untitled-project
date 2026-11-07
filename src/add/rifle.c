@@ -54,7 +54,7 @@ void rifle_draw( double timeDiff )
       break;
 
     case RIFLE_MODE_MULT:
-      ttext_drawText( 0.0f, 0.0f, "Feuersto�" );
+      ttext_drawText( 0.0f, 0.0f, "Feuerstoß" );
 
       if( mouseButtons[0] )
       {

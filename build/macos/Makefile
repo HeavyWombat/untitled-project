@@ -50,6 +50,8 @@ CFLAGS += $(shell pkg-config --cflags libpng 2>/dev/null || echo "-I/usr/local/i
 LDFLAGS = -framework OpenGL
 LDFLAGS += -framework Cocoa
 LDFLAGS += -framework OpenAL
+LDFLAGS += -framework AudioToolbox
+LDFLAGS += -framework CoreText
 LDFLAGS += -lz
 # Try pkg-config, fall back to Homebrew defaults if not available
 LDFLAGS += $(shell pkg-config --libs libpng 2>/dev/null || echo "-L/usr/local/lib -L/opt/homebrew/lib -lpng")
