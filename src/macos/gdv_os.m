@@ -41,7 +41,7 @@ void (*gdv_os_keyEventFunction)(GDV_BaseEvent* event) = NULL;
 
 /* Forward declarations */
 int gdv_os_openWindow_intern(char* title, int width, int height, int fullscreen);
-int gdv_os_translateKeysToCommonTable(int key);
+int gdv_os_translateEventToCommonTable(NSEvent* event);
 
 /* Custom OpenGL View */
 @interface GDVOpenGLView : NSOpenGLView
@@ -157,8 +157,7 @@ int gdv_os_translateKeysToCommonTable(int key);
 
 - (void)keyDown:(NSEvent *)event {
     if (gdv_os_keyEventFunction) {
-        unsigned short keyCode = [event keyCode];
-        int translatedKey = gdv_os_translateKeysToCommonTable(keyCode);
+        int translatedKey = gdv_os_translateEventToCommonTable(event);
 
         if (translatedKey == GDV_KEY_ESCAPE) {
             gdv_os_exit();
@@ -171,8 +170,7 @@ int gdv_os_translateKeysToCommonTable(int key);
 
 - (void)keyUp:(NSEvent *)event {
     if (gdv_os_keyEventFunction) {
-        unsigned short keyCode = [event keyCode];
-        int translatedKey = gdv_os_translateKeysToCommonTable(keyCode);
+        int translatedKey = gdv_os_translateEventToCommonTable(event);
 
         GDV_Event_Keyboard ke = {GDV_EVENT_KEY_UP, translatedKey};
         gdv_os_keyEventFunction((GDV_BaseEvent*)&ke);
@@ -602,9 +600,9 @@ int gdv_os_createScreenshot() {
     return 0;
 }
 
-int gdv_os_translateKeysToCommonTable(int key) {
+int gdv_os_translateEventToCommonTable(NSEvent* event) {
     /* macOS key code to common key code mapping */
-    switch(key) {
+    switch([event keyCode]) {
         case 0x35: return GDV_KEY_ESCAPE;
         case 0x7E: return GDV_KEY_UP;
         case 0x7D: return GDV_KEY_DOWN;
@@ -649,11 +647,24 @@ int gdv_os_translateKeysToCommonTable(int key) {
         /* PAUSE key: macOS doesn't have a direct equivalent to 0x71 */
         case 0x6E: return GDV_KEY_SCROLL;
         default:
-            /* Try to map alphanumeric keys */
-            if (key >= 0 && key <= 127) {
-                /* Basic ASCII mapping - will need refinement */
-                return key;
-            }
-            return key;
+            break;
     }
+
+    /* Printable keys: the game indexes gdv_key_states[] by ASCII character
+       (e.g. 'w', 'a', 's', 'd'), so translate the character produced by the
+       keyboard layout and lowercase letters, matching the Windows platform
+       layer which uses ToAscii(). */
+    NSString* characters = [event charactersIgnoringModifiers];
+
+    if ([characters length] > 0) {
+        unichar character = [characters characterAtIndex:0];
+
+        if ((character >= 'A') && (character <= 'Z')) {
+            character = character - 'A' + 'a';
+        }
+
+        return (int)character;
+    }
+
+    return (int)[event keyCode];
 }
