@@ -1,3 +1,7 @@
+# Temp
+data/*.png
+data/*.wav
+
 # Compiled executables
 *.exe
 

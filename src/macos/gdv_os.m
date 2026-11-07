@@ -342,6 +342,13 @@ int gdv_os_openWindow_intern(char* title, int width, int height, int fullscreen)
         }
 
         [gdv_os_window setContentView:gdv_os_glView];
+
+        /* Use a 1x OpenGL surface so the viewport (set in points) matches the
+           actual framebuffer. Without this, Retina displays create a 2x
+           surface while the game still uses point dimensions, causing the
+           scene to render in only the bottom-left quarter of the window. */
+        [gdv_os_glView setWantsBestResolutionOpenGLSurface:NO];
+
         gdv_os_glContext = [gdv_os_glView openGLContext];
         [gdv_os_glContext makeCurrentContext];
 
